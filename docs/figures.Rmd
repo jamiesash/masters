@@ -16,14 +16,14 @@ knitr::opts_chunk$set(echo = TRUE)
 # by the rmarkdown document, these packages won’t be loaded. 
 library(kableExtra)
 library(lubridate)
-setwd("C:\\Users\\james\\Desktop\\jamieslife\\doc")
+#setwd("C:\\Users\\james\\Desktop\\jamieslife\\doc")
 ```
 
 \newpage  
 
 ## Table 1: Summary table of late summer CHL blooms in the NPSG
 ```{r, echo=FALSE, out.width='65%', fig.show='hold', fig.cap = ""}
-tbl = read.csv("../data/outfiles/full_sum_2.csv")
+tbl = read.csv("../data/full_sum_2.csv")
 idx = !year(tbl$sdate) == 2008
 tbl = tbl[idx,]
 tbl$duration[nrow(tbl)] = 92
@@ -69,7 +69,7 @@ kbl(tbl,
 ## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
 \captionsetup{justification=justified,margin=1.5cm}
 ```{r,echo=FALSE, fig.align='center',  fig.fullwidth=TRUE, out.width='75%', fig.show='hold', fig.cap="Monthly images of CHL bloom values within the chosen study region of the NPSG. Each row shows a unique year, and the five late summer months in which the blooms occur. The Hawaiian islands are shown in the bottom left. Bloom values are found using the CHL anomaly product. "}
-knitr::include_graphics(c('../figs/thumbnail_20220713_latesummer.png'))
+knitr::include_graphics(c('../figures/thumbnail_20220713_latesummer.png'))
 ```
 
 \newpage  
@@ -77,7 +77,7 @@ knitr::include_graphics(c('../figs/thumbnail_20220713_latesummer.png'))
 ## Figure 2: HPLC against Satellite CHL Comparison and CHL Climatologies
 \captionsetup{justification=justified,margin=3cm}
 ```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE, fig.show='hold',out.width = "55%", fig.cap="Comparison of High-pressure Liquid Chromatography (HPLC) bottle samples against the GlobColor CHL1 Lm3 satellite product. The generalized linear regression (family = gamma) gives an $r^2$ value of $0.454$ with a significant fit ($p < 0.05$). Figure b) a box plot of the average monthly CHL satellite signal across the 18 years of data. The light grey boxes are for the region at 30N, and the dark grey box is for the region around Stn. ALOHA."}
-knitr::include_graphics( '..//figs/HPLC_CHL_clim.png')
+knitr::include_graphics( '..//figures/HPLC_CHL_clim.png')
 ```
   
 \newpage  
@@ -85,7 +85,7 @@ knitr::include_graphics( '..//figs/HPLC_CHL_clim.png')
 \captionsetup{justification=justified,margin=1cm}
 ## Figure 3:  k-means cluster analysis of (sub)mesoscale regions
 ```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE, out.width="100%", fig.show='hold', fig.cap="K-means cluster analysis (method = euclidean distance, k = 4, scale = 0-1) applied to the FSLE, and SLA fields at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions."}
-knitr::include_graphics('..//figs//triplot_20220802.png')
+knitr::include_graphics('..//figures//triplot_20220802.png')
 ``` 
 
 \newpage 
@@ -93,7 +93,7 @@ knitr::include_graphics('..//figs//triplot_20220802.png')
 ## Figure 4: Two late summer CHL blooms relationship to fronts and eddies
 \captionsetup{justification=justified,margin=0cm}
 ```{r, echo=FALSE, fig.align='center',  fig.fullwidth=TRUE, out.width='100%', fig.show='hold', fig.cap = "Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies. Both blooms appear to be associated with frontal features with little apparent association to mesoscale eddies."}
-knitr::include_graphics(c('..//figs/eddies_fronts_blooms.png'))
+knitr::include_graphics(c('..//figures/eddies_fronts_blooms.png'))
 ```
 
 \newpage  
@@ -101,7 +101,7 @@ knitr::include_graphics(c('..//figs/eddies_fronts_blooms.png'))
 ## Figure 5: Spatio-temporal evolution of the 2018 bloom
 \captionsetup{justification=justified,margin=0.5cm}
 ```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE,  out.width='100%', fig.show='hold', fig.cap = "8 day composites showing the start and demise of the 2018 bloom in the NSPG. Bloom values are chosen using the CHL anomaly. Strong frontal features  from FSLE satellite data are shown as black lines. Day of the year is shown in the top left corner of each plot"}
-knitr::include_graphics(c('..//figs/thumbnail_2018_20220719.png'))
+knitr::include_graphics(c('..//figures/thumbnail_2018_20220719.png'))
 ```
 
 \newpage  
@@ -109,15 +109,15 @@ knitr::include_graphics(c('..//figs/thumbnail_2018_20220719.png'))
 ## Figure 6: Satellite-based time series of the 2018 bloom
 \captionsetup{justification=justified,margin=4cm}
 ```{r, echo=FALSE, fig.align='center', out.height = '65%', fig.show='hold', fig.cap = "Timeseries progression of the onset and demise of the 2018 bloom in the NPSG. Black and grey lines (95\\% confidence interval) are a GAM smoother. Figure a) shows the surface, figure b) shows the biomass, and figure c) shows the depth integrated CHL concentration."}
-knitr::include_graphics(c('..//figs/biomass_conc_area.png'))
+knitr::include_graphics(c('..//figures/biomass_conc_area.png'))
 ```
 
 \newpage  
 
 ## Figure 7: Spatial association of (sub)mesoscale features across the lifespan of the 2018 bloom
 \captionsetup{justification=justified,margin=3cm}
-```{r, echo=FALSE, fig.align='center', out.height = '65%', fig.show='hold', fig.cap = "Timeseries of bloom percent association (deviation from the background) of bloom values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent association is the percent of each (sub)mesoscale region’s area that is associated with a bloom feature."}
-knitr::include_graphics(c('..//figs/submeso_timeseries.png'))
+```{r, eval = FALSE, echo=FALSE, fig.align='center', out.height = '65%', fig.show='hold', fig.cap = "Timeseries of bloom percent association (deviation from the background) of bloom values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent association is the percent of each (sub)mesoscale region’s area that is associated with a bloom feature."}
+knitr::include_graphics(c('..//figures/submeso_timeseries.png'))
 ```
 
 \newpage  
@@ -125,7 +125,7 @@ knitr::include_graphics(c('..//figs/submeso_timeseries.png'))
 ## Figure 8: Bloom centers and maximum area
 \captionsetup{justification=justified,margin=0.5cm}
 ```{r, echo=FALSE, fig.align='center', out.width = '100%', fig.show='hold', fig.cap = "Bloom centers for all summer to fall blooms that occur between 2003-2021. The area of each circle is equal to the maximum area each bloom reached, calculated from the 1-day L3 CHL product (erdMH1chla1day)."}
-knitr::include_graphics('..//figs/bloom_centers_area_20220725.png')
+knitr::include_graphics('..//figures/bloom_centers_area_20220725.png')
 ```
 
 
@@ -135,7 +135,7 @@ knitr::include_graphics('..//figs/bloom_centers_area_20220725.png')
 \captionsetup{justification=justified,margin=0.5cm}
 ```{r, echo = FALSE, fig.align='center', out.width = '100%', fig.show='hold', fig.cap = "Bar plot of the bloom duration for all summer to fall blooms that occur between 2003-2021. Start and end date of each bloom (table 1) found using an STL filter. The length of each bar is equal to the duration described in table 1, as well as the start date of each bloom. The grey center line is the middle of each bloom, found as the mean of the bloom start and end date."}
 #knitr::include_graphics(c('..//figs/bloom_duration_2.png'))
-knitr::include_graphics(c('..//figs/bloom_durations_20220725_2.png'))
+knitr::include_graphics(c('..//figures/bloom_durations_20220725_2.png'))
 ```
 
 
