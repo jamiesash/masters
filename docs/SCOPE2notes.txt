@@ -1,0 +1,71 @@
+
+
+Slide 1: Title slide
+*Hello, my name is Jamie Ash. I'm  Masters student in Angel White's lab. My thesis project aimed at characterize the chlorophyll blooms that are occurring in the North East Pacific Subtropical Gyre. These blooms occur both around St. Aloha and along 30N line of latitude depicted here this map that shows the area just north of the Hawaiian islands. This figure is a climatological average of the late summer months,  June-October, across 18 years of GlobColour CHL data.
+
+Slide 2: Objectives
+* First we characterize the magnitude, frequency, and geographic location of CHL blooms. We do this using an updated bloom threshold on the CHL anomaly that we calculate using an STL filter. 
+* We then use a cluster analysis using FSLE and SLA satellite fields to determine the association of (sub)mesoscale features with the CHL blooms. This is done to identify the potential physical drivers of these blooms. 
+* Finally we hope to present a case study of a bloom from each study region to better understand the time-resolved change in phytoplankton biomass across the lifespan of the blooms. 
+
+Slide 3: HPLC vs CHLsat
+* To start off I make a comparison between the HPLC bottle samples to the CHL satellite signal. 
+* HPPLC are the gold standard for measuring CHL pigment in water. Ideally there would be a near 1:1 fit between the two (dashed line).
+* Although the slope is 0.5 we do find that the fit is significant. We find this to be good enough. 
+
+Slide 4: Comparison of HPLC, Satellite CHL and Bottle POC
+* The first step of the analysis was to address the seasonal signal that is driven by photo-acclimation. In the winter individual phytoplankton cells produce more CHL to accommodate the lower light levels. So an increase in CHL signal is not directly corelated to an increase in cell growth or count (ie a bloom). This is shown in the POC bottle samples which are a good proxy for cell count. As we would expect, POC is greatest in the summer when these CHL blooms occur. 
+
+Slide 5: Comparison of HPLC, Satellite CHL and Bottle POC
+* To address this we calculate a CHL anomaly that removes the seasonal trend, and captures the CHL blooms in the late summer. 
+
+Slide 6: Calculating the CHL anomaly 
+* I calculate the CHL anomaly using an STL filter on each grid cell of the CHL data.
+* An STL filter takes a timeseries (in red) and breaks it down into three components (in plum): A seasonal trend, a climatological trend, and the residuals. 
+*Loess filters or running window filters are very common in signal processing. An STL filter is a type of loess filter that is built to decomposes timeseries that have a seasonal and climatological trend. 
+* The late summer CHL blooms are captured in the residuals. So I define the CHL anomaly as the residuals of the STL filter. 
+
+Slide 7: Frequency of CHL Blooms and Bloom threshold Definition
+* Now I define a bloom threshold. 
+* The top figure is the classic bloom threshold for this region, which is a blanket 0.15mg/m^3 (shown as horizontal line)
+* The bottom figure is the redefined bloom threshold which is the median plus the MAD of the CHL anomoly previously defined. 
+* We feel it does a better job of capturing these late summer CHL blooms.
+
+Slide 8: Climatology of the STL filtered CHL sat residuals: 2002-2019
+This is the same climatology I showed before (first slide), only now I'm using the CHL anomaly. 
+* You can see it removes the MASS Island effect and the CHL Maximum Front pretty well.
+
+Slide 9: (Sub)mesoscale Background
+* I'm interested in how submesoscale and mesoscale regions are correlated to CHL blooms. 
+* Define Mesoscale/submesoscale regions. 
+* I identify these regions using a cluster analysis on SLA and FSLE satellite products
+* SLA is the SSH with the climatological/seasonal mean subtracted out
+* High FSLE represents high stretching. used to identify fronts. 
+
+Slide 10: Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+* This is a visualization of the SLA and FSLE fields as well as the submesoscale regions. 
+* The SLA and FSLE fields (top figure) are the inputs to the k-means cluster analysis and the (sub)mesoscale regions are the outputs of the cluster analysis.
+
+Slide 11: Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+* What we're really interested in is how these CHL blooms (snapshot in top figure) a line with the (sub)mesoscale regions. 
+
+Slide 12: Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+* This is the same concept I just showed, but gives more insight into how the cluster analysis works. 
+* The x-axis is SLA and the y-axis is FSLE (inputs to the cluster analysis) and the color is the group factor (output of the cluster analysis)
+* each of these points is associated with a lon/lat/datetime and all the cluster analysis sees is the paired SLA and FSLE values and the output is a factor between 1-4 (colors). 
+
+Slide 13: Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+* Again, what I'm interested in is how these regions are associated with the bloom values.
+* I subset the bloom values using the previously defined bloom threshold (shown in dark green)
+* First, as an exploratory step I calculate the percent association of the Bloom values with the (sub)mesoscale regions. 
+
+Slide 14-16: (Sub)mesoscale Percent Association to CHL Anomalies
+* I represent the results as percent association to each submesoscale region. The rows sum to 10-0%
+* For example, in 2018 the CHL blooms was very much so associated with positive mesoscale features. The difference from the background field is 15%. 
+* This could indicate that this bloom was associated with regions of downwelling. Producing an environment where nitrogen fixing phytoplankton could thrive (bloom).
+* I'm primarily using these results to get a general overview of what is going on within each bloom year, as well as to inform a case study. 
+
+Slide 17: Case Study
+* For the case Study I would like to address the time resolved change in CHL. What's happening from the onset to the demise of the blooms. 
+* To do this I'm considering a GAM because it can handle spatially and temporally auto-correlated data. 
+* The Case study is to be determined and suggestions on how to approach it are welcome

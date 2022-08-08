@@ -1,0 +1,671 @@
+---
+title: "submeso_time_series"
+author: "Jamie Ash"
+date: '2022-07-21'
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE}
+source("../R/functions.R")
+source("../R/libraries.R")
+rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+functions
+```{r}
+# input is a boolian raster layer of 0/1 
+# output is a data frame with only high values included
+# Downsize reduces the size of the data set
+# I may like to simultaneously index the chl signal as well
+
+# ------------------------------------------------------------------------------
+# input is a raster output is a boolian raster of bloom/not bloom
+bool = function(x){
+  u <- calc(x, fun = median, na.rm = TRUE)
+  o <- calc(x, fun = mad, na.rm = TRUE)
+  boo <- x > (u + o)
+  extent(boo) <- extent(x)
+  boo <- setZ(boo, z = getZ(x), name = "time")
+  boo
+}
+
+# ---------------------------------------------------------------------------
+tableit <- function(x) {
+  vectorize  <- function(x) {
+    sdate <- getZ(x)
+    x     <- rasterToPoints(x)
+    x     <- data.frame(x)
+    colnames(x) <- c("lat", "lon", as.character(sdate))
+    x     <- reshape2::melt(x, id.vars = c("lat", "lon"))
+    colnames(x) <- c("lats", "lons", "time", "val")
+    x
+  }
+  x     = lapply(x, FUN = vectorize)
+  vals  = lapply(x, FUN = subset, select = "val")
+  quord = lapply(x, FUN = subset, select = c("lons", "lats", "time"))
+  xyz   = data.frame(quord[1], vals)
+  
+  xyz$time = as.character(xyz$time)
+  xyz$time = as.Date(xyz$time)
+  xyz
+  
+  # s = dim(x)
+  # grid = meshgrid(lon, lat)
+  # lat  = raster(grid$X)
+  # lat  = raster(grid$Y)
+  # lat  = rep(lat, s[3])
+  # lon  = rep(lon, s[3])
+  # lat  = values(raster(lat))
+  # lon  = values(raster(lat))
+}
+
+# ------------------------------------------------------------------------------
+jamie_theme <- function(x,
+                        y, 
+                        mar = c(1,1,1,1),
+                        #asp = 1,
+                        ylim = range(y),
+                        xlim = range(x),
+                        main = "",
+                        dt = TRUE,
+                        ylab = "",
+                        xlab = "",
+                        yaxes = FALSE,
+                        xaxes = FALSE,
+                        line = 0.75,
+                        adj = 0.1
+                        ){
+  if(is.numeric(x)) x <- round(x, 1)
+  if(is.numeric(y)) y <- round(y, 1)
+  par(mar = mar)
+  plot(0,
+       ylim = ylim,
+       xlim = xlim,
+       main = "",
+       xlab = "",
+       ylab = "",
+       axes = FALSE,
+       )
+  if(xaxes){
+    axis(side = 1,
+         las = 1, 
+         lwd = 2, 
+         mgp = c(2, 1, 0), 
+         cex.axis = 1,
+         col = colvect("grey22", alpha = 0.9))
+    }
+  if(yaxes){
+    axis(side = 2,
+         las  = 2, 
+         lwd  = 2, 
+         mgp  = c(1, 0.75, 0), 
+         cex.axis = 1,
+         col = colvect("grey22", alpha = 0.9))
+    }
+  grid(nx = NULL, # X-axis divided in two sections
+       ny = NULL, # Y-axis divided in three sections
+       lty = 2, 
+       col = colvect(c("gray69"), alpha = 0.5), lwd = 1)
+  box(which = "plot", 
+      lty = "solid", 
+      lwd = 3, 
+      col = colvect("grey22", alpha = 0.9))
+  title(main = main,
+        cex.lab = 2,
+        line= line,
+        adj = adj)
+  title(ylab = ylab, cex.lab = 1.5, line = 2.5)
+  title(xlab = xlab, cex.lab = 1.5, line = 2.5)
+}
+
+```
+
+
+```{r}
+blooms = read.csv("../data/outfiles/full_sum.csv")
+# subseting just 2018 for case study
+idx = year(blooms$sdate) == 2018
+sdate = as.Date(blooms$sdate[idx]) - 22
+edate = as.Date(blooms$edate[idx]) + 22
+# lons  = c(-158, -130)
+# lats  = c(23, 34)
+lons = c(-171, -129)
+lats = c( 17,   36)
+
+# I need to make sure I'm not saving a fuck tone of files
+# I'm uploading the large data set for the anomaly calculation
+chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chla1day",
+              lat = lats,
+              lon = lons,
+              sdate = as.Date("2010-01-08"),
+              edate = as.Date("2019-01-01"),
+              large = TRUE,
+              by    = 365)
+
+fsle = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
+               patt = "fsle_po_2018.nc")
+gc()
+
+sla = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\sla\\",
+               patt = "SLA_dt_2018.nc",
+              vars = c("latitude", "longitude", "sla", "time"))
+gc()
+```
+
+```{r}
+# for transposing and flippig the raster 
+oreant = function(ras, flip = NULL, t1 = FALSE, t2 = FALSE){
+  e    = extent(ras)
+  time = getZ(ras)
+  if(t1) ras = raster::t(ras)
+  if(!is.null(flip)) ras = raster::flip(ras,  direction = flip)
+  if(t2) ras = raster::t(ras)
+  extent(ras) = e
+  ras = setZ(ras, z = time, name = "time")
+  ras
+  }
+
+fsle = oreant(fsle, flip = "y", t1 = TRUE)
+gc()
+sla  = oreant(sla, flip = "y", t1 = TRUE)
+gc()
+chl  = oreant(chl, t1 = TRUE)
+gc()
+```
+
+Crop all to the same extent
+```{r crop}
+extent(fsle) = extent(fsle) - c(360, 360, 0 ,0)
+extent(sla)  = extent(sla) - c(360, 360, 0 ,0)
+e = extent(-165, -131, 23, 34)
+fsle = raster::crop(fsle, e)
+chl  = raster::crop(chl, e)
+sla  = raster::crop(sla,  e)
+gc()
+```
+
+Calculate a CHL anomaly and index bloom values
+```{r}
+chla = anomalize(ras = chl, detrend = FALSE)
+chlb = bool(x = chla)
+gc()
+```
+Make FSLE and CHL them the same time domain. Make FSLE same temporal resolution as CHL
+```{r}
+# rasters area list of rasters like c(ras1, ras2, ras3)
+# will cut time down to the min end date and min start date so they same length
+# uses the timesnip function
+domains = function(rasters){
+  z       = lapply(rasters, FUN = getZ)
+  zmin    = lapply(z, FUN = min, na.rm = TRUE)
+  zmax    = lapply(z, FUN = max, na.rm = TRUE)
+  sdate   = max(as.Date(unlist(zmin)))
+  edate   = min(as.Date(unlist(zmax)))
+  rasters = lapply(rasters, FUN = timesnip, sdate = sdate, edate = edate)
+  rasters
+  }
+
+match = function(x, y){
+  ty = getZ(y)
+  ty = as.numeric(ty)
+  tx = getZ(x)
+  tx = as.numeric(tx)
+  
+  idx  = which(is.element(tx, ty))
+  tx   = subset(tx, is.element(tx, ty))
+  x = raster::subset(x, idx)
+  x = setZ(x, z = as.Date(tx), name = "time")
+  x
+}
+
+rasters = domains(rasters = c(fsle, sla, chlb, chla, chl))
+
+fsle = rasters[[1]]
+sla  = rasters[[2]]
+chlb = rasters[[3]]
+chla = rasters[[4]]
+chl  = rasters[[5]]
+rm(rasters)
+gc() 
+
+fsle = match(x = fsle, y = chlb)
+sla  = match(x = sla,  y = chlb)
+gc()
+```
+
+Cut to timespan of bloom from table 1
+```{r}
+blooms = read.csv("../data/outfiles/full_sum.csv")
+# subseting just 2018 for case study
+idx = year(blooms$sdate) == 2018
+sdate = as.Date(blooms$sdate[idx]) - 22
+edate = as.Date(blooms$edate[idx]) + 22
+
+chl  = timesnip(chl,  sdate, edate)
+chla = timesnip(chla, sdate, edate)
+chlb = timesnip(chlb, sdate, edate)
+fsle = timesnip(fsle, sdate, edate)
+sla  = timesnip(sla,  sdate, edate)
+```
+
+```{r resample}
+resample = function(ras, to, method = "bilinear"){
+  raster::crs(ras) = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
+  t = getZ(to)
+  e = extent(to)
+  extent(ras) = extent(e)
+  ras = raster::resample(ras,  to, method = method)
+  extent(ras) = e
+  ras = setZ(ras, z = as.Date(t), name = "time") 
+  ras
+  }
+
+chl  = resample(chl,  to = fsle)
+gc()
+chla = resample(chla, to = fsle)
+gc()
+chlb = resample(chlb, to = fsle)
+gc()
+sla  = resample(sla,  to = fsle)
+gc()
+fsle = resample(fsle, to = fsle)
+gc()
+```
+
+Remove coastal influence
+```{r}
+chlb = bufcoast(chlb, 
+               region = "Hawaiian Islands", 
+               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+chla = bufcoast(chla, 
+               region = "Hawaiian Islands", 
+               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+chl = bufcoast(chl, 
+               region = "Hawaiian Islands", 
+               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+fsle = bufcoast(fsle, 
+               region = "Hawaiian Islands", 
+               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+sla = bufcoast(sla, 
+               region = "Hawaiian Islands", 
+               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+gc()
+```
+
+Create table
+```{r}
+# this is much simpler code but may take alot of memory
+xyz = tableit(c(sla, fsle, chl, chla, chlb))
+colnames(xyz) = c("lon", "lat", "time", "sla", "fsle", "chl", "chla", "chlb")
+
+xyz$fsle = xyz$fsle * -1
+xyz = xyz[!is.na(xyz$sla),]
+xyz = xyz[!is.na(xyz$fsle),]
+gc()
+```
+
+Kcluster by day
+```{r, message = FALSE}
+kcluster = function(x){
+  x$fsle = scale01(x$fsle)
+  x$sla  = scale01(x$sla)
+  
+  us = median(x$sla, na.rm = TRUE)
+  uf = median(x$fsle, na.rm = TRUE)
+  ms = mad(x$sla, na.rm = TRUE)
+  mf = mad(x$fsle, na.rm = TRUE)
+  
+  cents = rbind(c(us,      uf),
+                c(us - ms, uf),
+                c(us + ms, uf),
+                c(us, uf + mf))
+  set.seed(225)
+  ktbl = kmeans(x[ ,c("sla", "fsle")], 
+                 centers   = cents,
+                 iter.max  = 50,
+                 nstart    = 100, 
+                 algorithm = "Lloyd")
+  data.frame(ktbl$cluster)[, 1]
+}
+d = as.factor(xyz$time)
+k = lapply(split(xyz, d), FUN = kcluster)
+k = unlist(k)
+xyz$k = as.numeric(k)
+
+df  = xyz[!is.na(xyz$chl),]
+df$k = as.factor(df$k)
+gc()
+```
+
+subsisting each region t be plotted
+```{r}
+reg   = split(xyz, xyz$k)
+mix   = reg[[1]]
+mesop = reg[[2]]
+meson = reg[[3]]
+sub   = reg[[4]]
+
+ass = function(x){
+  x = x[!is.na(x)]
+  sum(x)/length(x)
+}
+
+back = lapply(split(xyz$chlb, xyz$time), FUN = ass)
+time = as.Date(names(back))
+back = as.numeric(unlist(back))
+
+mix = lapply(split(mix$chlb, mix$time), FUN = ass)
+mix = as.numeric(unlist(mix))
+mix = mix - back
+
+sub = lapply(split(sub$chlb, sub$time), FUN = ass)
+sub = as.numeric(unlist(sub))
+sub = sub - back
+
+mesop = lapply(split(mesop$chlb, mesop$time), FUN = ass)
+mesop = as.numeric(unlist(mesop))
+mesop = mesop - back
+
+meson = lapply(split(meson$chlb, meson$time), FUN = ass)
+meson = as.numeric(unlist(meson))
+meson = meson - back
+
+regions = data.frame(time = time, back = back, mix = mix, sub = sub, mesop = mesop, meson = meson)
+regions$time = as.numeric(regions$time)
+```
+
+# plotting 
+
+```{r, fig.height = 10, fig.width=5}
+layout(matrix(c(1, 
+                2, 
+                3), 
+              nrow = 3, 
+              ncol = 1,
+              byrow = TRUE),
+       widths  = c(1),
+       heights = c(1, 1, 1.15))
+
+y = regions$sub
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Fronts", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            xaxes = FALSE,
+            yaxes = TRUE,
+            mar   = c(1, 5, 2, 3))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+
+y = regions$mesop
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Anti-Cyclonic", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            xaxes = FALSE,
+            yaxes = TRUE,
+            mar = c(1, 5, 1, 3))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+
+y = regions$meson
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Cyclonic", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            yaxes = TRUE,
+            xaxes = FALSE,
+            mar = c(5, 5, 1, 3))
+lab = seq(from = min(x), to = max(x), length = 5)
+axis(side = 1,
+     at     = lab,
+     labels = as.character(as.Date(lab)), 
+     las = 1, 
+     lwd = 2, 
+     mgp = c(2, 1, 0), 
+     cex.axis = 1,
+     col = colvect("grey22", alpha = 0.9))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+rm(x, y)
+
+# y = regions$back
+# x = regions$time
+# data = regions
+# bound = gam(y ~ s(x), data = data)
+# bound = predict.gam(bound, se.fit = TRUE)
+# ft   = bound$fit
+# lwr = bound$fit - bound$se.fit
+# upr = bound$fit + bound$se.fit
+# idx = as.numeric(names(ft))
+# t  = x[idx]
+# jamie_theme(x = x, 
+#             y = y, 
+#             dt = FALSE,
+#             main = "Backround", 
+#             ylim = range(y, na.rm = TRUE),
+#             xlab = "test",
+#             ylab = "Surface Area [km^2e05]",
+#             line = -2,
+#             adj = 0.05,
+#             yaxes = FALSE,
+#             xaxes = TRUE)
+# polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+# lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+# lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+# lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+# points(x, y,  pch = 20, cex = 1.25) 
+```
+
+
+subsisting each region t be plotted
+```{r}
+reg   = split(xyz, xyz$k)
+mix   = reg[[1]]
+mesop = reg[[2]]
+meson = reg[[3]]
+sub   = reg[[4]]
+
+back = lapply(split(xyz$chla, xyz$time), FUN = mean, na.rm=TRUE)
+time = as.Date(names(back))
+back = as.numeric(unlist(back))
+
+mix = lapply(split(mix$chla, mix$time), FUN = mean, na.rm=TRUE)
+mix = as.numeric(unlist(mix))
+mix = mix - back
+
+sub = lapply(split(sub$chla, sub$time),  FUN = mean, na.rm=TRUE)
+sub = as.numeric(unlist(sub))
+sub = sub - back
+
+mesop = lapply(split(mesop$chla, mesop$time), FUN = mean, na.rm=TRUE)
+mesop = as.numeric(unlist(mesop))
+mesop = mesop - back
+
+meson = lapply(split(meson$chla, meson$time), FUN = mean, na.rm=TRUE)
+meson = as.numeric(unlist(meson))
+meson = meson - back
+
+regions = data.frame(time = time, back = back, mix = mix, sub = sub, mesop = mesop, meson = meson)
+regions$time = as.numeric(regions$time)
+```
+
+```{r, fig.height = 10, fig.width=5}
+layout(matrix(c(1, 
+                2, 
+                3), 
+              nrow = 3, 
+              ncol = 1,
+              byrow = TRUE),
+       widths  = c(1),
+       heights = c(1, 1, 1.15))
+
+y = regions$sub
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Fronts", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            xaxes = FALSE,
+            yaxes = TRUE,
+            mar   = c(1, 5, 2, 3))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+
+y = regions$mesop
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Anti-Cyclonic", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            xaxes = FALSE,
+            yaxes = TRUE,
+            mar = c(1, 5, 1, 3))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+
+y = regions$meson
+x = regions$time
+data = regions
+bound = gam(y ~ s(x), data = data)
+bound = predict.gam(bound, se.fit = TRUE)
+ft   = bound$fit
+lwr = bound$fit - bound$se.fit
+upr = bound$fit + bound$se.fit
+idx = as.numeric(names(ft))
+t  = x[idx]
+jamie_theme(x = x, 
+            y = y, 
+            dt = FALSE,
+            main = "Cyclonic", 
+            ylim = range(y, na.rm = TRUE),
+            xlab = "",
+            ylab = "Percent Association",
+            line = -2,
+            adj = 0.05,
+            yaxes = TRUE,
+            xaxes = FALSE,
+            mar = c(5, 5, 1, 3))
+lab = seq(from = min(x), to = max(x), length = 5)
+axis(side = 1,
+     at     = lab,
+     labels = as.character(as.Date(lab)), 
+     las = 1, 
+     lwd = 2, 
+     mgp = c(2, 1, 0), 
+     cex.axis = 1,
+     col = colvect("grey22", alpha = 0.9))
+polygon(c(as.numeric(t), rev(as.numeric(t))), c(upr, rev(lwr)), lty = 0, col = "grey")
+lines(t, ft,  pch = 20, col = "grey22",  cex = 1.25)
+lines(t, lwr, pch = 20, col = "grey40", cex = 1.25)
+lines(t, upr, pch = 20, col = "grey40", cex = 1.25)
+points(x, y,  pch = 20, cex = 1.25) 
+rm(x, y)
+ 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

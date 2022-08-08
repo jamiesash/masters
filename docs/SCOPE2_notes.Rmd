@@ -1,0 +1,34 @@
+---
+title: "SCOPE2_notes"
+author: "Jamie Ash"
+date: "1/11/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Contour plot of the GlobColor Satellite product, for the late summer months of 18 years of data. The two study regions, at St. ALOHA and 30N, are outlined by the black squares. St. ALOHA's location is marked by the red point
+
+Comparison of High pressure Liquid Chromatography (HPLC) and GlobColor CHL1 satellite product. The generalized linear regression (family = gamma) gives an $r^2$ value of $0.38$ with a significant ($p = 0.46$) fit.
+
+The seasonal signals of the CHL satellite product (top figure) and HPLC bottle samples. POC bottle samples (middle figure) show a maximum in the summer and minimum in the winter (low light availability). The CHL anomaly (bottom figure) shows high deviation (shaded region) in the late summer"
+
+The top and middle figures are timeseries of the raw $CHL_{sat}$ and the $CHL_{sat}$ anomaly with the winter solstice as the grey dashed vertical lines. The bottom figures are transects along 158W going north-south through St. ALOHA.
+
+K-means cluster analysis applied to the CHL anomaly, FSLE, and SLA at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions.
+
+K-means cluster analysis applied to the CHL anomaly, FSLE, and SLA at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions.
+
+K-means cluster analysis applied to the CHL anomaly, FSLE, and SLA at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions.
+
+
+
+
+
+
+
+
+
+

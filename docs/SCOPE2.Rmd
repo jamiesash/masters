@@ -1,0 +1,267 @@
+---
+title: "Characterizing Chlorophyll Blooms in the North Pacific Subtropical Gyre"
+output: 
+  pdf_document:
+geometry: paperheight = 5.5in, paperwidth = 6in, margin = 0.2in
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+```
+
+```{r, echo=FALSE, fig.align='center',  out.width='90%', fig.show='hold'}
+knitr::include_graphics('../figs/CHL_clim_1d.png')
+```
+  
+\newpage 
+  
+### Objectives:  
+1) Characterize CHL blooms in the NE Pacific Gyre:
+  - Remove the photo acclimation driven seasonal signal and northward CHL gradient   
+  - Redefine the bloom threshold as all positive residuals of the STL filtered GlobColour CHL1 satellite product, or the CHLsat anomaly (CHLanom): characterize the magnitude, frequency, and geographic location of CHL blooms.
+2) Describe CHL blooms association with meso-submesoscale features to identify potential physical drivers:
+  - cluster analysis is applied to the CHL anomalies that occur in the NEPSG encompassing the canonical 30N blooms and a control site in the NPSG at the Hawaii Ocean Time-series (HOT) Station ALOHA.  
+  - determine the association of meso-submesoscale regions with anomalous CHL patterns for each of the bloom occurrences in both study regions (Guo 2019).   
+  - Identify the role of frontogenesis and straining in promoting phytoplankton blooms.  
+  
+3) Present case-study time-series of blooms in each sub-region in order to better understand the time-resolved change in phytoplankton biomass in the study region and how it relates to chemical and physical drivers of biomass growth and accumulation.   
+    
+\newpage  
+
+## HPLC and satellite CHL calibration
+```{r, echo=FALSE, fig.align='center', fig.show='hold', out.width='100%'}
+knitr::include_graphics('../figs/HPLC_CHL_glm_25m_3d_logtx.png')
+```
+  
+\newpage  
+  
+## Comparison of HPLC, satellite CHL and bottle POC
+```{r, echo=FALSE, fig.align='center', out.width='80%', fig.show='hold'}
+knitr::include_graphics('..//figs/HPLC_CHL_POC_clim.png')
+```
+
+\newpage  
+  
+## Comparison of HPLC, satellite CHL and bottle POC
+```{r, echo=FALSE, fig.align='center', out.width='80%', fig.show='hold'}
+knitr::include_graphics('..//figs/HPLC_STL_POC_clim.png')
+```
+
+\newpage  
+  
+## Calculating the CHL anomaly using an STL filter
+```{r, echo=FALSE, fig.align='center',  out.width='75%', fig.show='hold'}
+knitr::include_graphics(c('..//figs/STL_filter_example2.png'))
+```
+
+\newpage  
+  
+## Frequency of CHL blooms and bloom threshold definition
+```{r, echo=FALSE, fig.align='center',  out.width='75%', fig.show='hold'}
+knitr::include_graphics(c('..//figs/stl_raw_thresh_comp2.png'))
+```
+
+\newpage 
+
+## Climotology of the STL filtered $CHL_{sat}$ residuals: 2002-2019
+```{r, echo=FALSE, fig.align='center',  out.width='90%', fig.show='hold'}
+knitr::include_graphics('../figs/CHLa_clim.png')
+```
+
+\newpage
+
+### Background  
+
+**Mesoscale:** Physical features in the ocean that occur on the order of a month and are within 10-200km in size. Medium sized features, mostly eddies.  
+
+**Submesoscale:** Fine scale flows or features that occur within 1-10km in size. Fronts associated with twisting and stretching.  
+
+**Finite Sized Laplacian Exponent (FSLE):** Defined as the inverse time of the separation of two particles from their initial distance to their final distance.  
+
+$$FSLE = \frac{1}{\tau} log(\frac{\delta_f}{\delta_0})$$
+
+where $\delta_0$ and $\delta_f$ are the initial and final distances of the two particles, and $\tau$ is the time taken during separation.  
+
+**Sea Level anomaly (SLA):** The difference between the sea level and the average sea level for that time of year.
+
+$$SLA = SSH - \overline{SSH}$$
+where $SSH$ is the sea surface height, and $\overline{SSH}$ is the climotological sea surface height. 
+  
+*Guo, M., Xiu, P., Chai, F., & Xue, H. (2019). Mesoscale and submesoscale contributions to high sea surface chlorophyll in subtropical gyres. Geophysical Research Letters, 46, 13, 217–13,226*
+  
+\newpage
+
+## Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+```{r, echo=FALSE, fig.align='center', out.width="85%", fig.show='hold'}
+knitr::include_graphics('..//figs/Subregions_SLA.png')
+```  
+
+\newpage
+
+## Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+```{r, echo=FALSE, fig.align='center', out.width="85%", fig.show='hold'}
+knitr::include_graphics('..//figs/subregions_CHL.png')
+```  
+
+\newpage  
+  
+## Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+```{r, echo=FALSE, fig.align='center', out.width='80%', fig.show='hold'}
+knitr::include_graphics('..//figs/ALOHA_kgroups.png')
+``` 
+
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+fake <- data.frame(as.Date("2018-10-02"), -132.4, 24.1, -0.08, 0.11, 0.02, 4)
+colnames(fake) <- c("datetime", "lon", "lat", "sla", "fsle", "chl", "k")
+
+kbl(fake, booktabs = T)%>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "4em")
+```
+
+\newpage  
+  
+## Kmeans cluster analysis of (sub)mesoscale regions at St. ALOHA
+```{r, echo=FALSE, fig.align='center', out.width='80%', fig.show='hold'}
+knitr::include_graphics('..//figs/ALOHA_kgroup_anom.png')
+``` 
+
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+fake <- data.frame(as.Date("2018-10-02"), -132.4, 24.1, -0.08, 0.11, 0.02, 4)
+colnames(fake) <- c("datetime", "lon", "lat", "sla", "fsle", "chl", "k")
+
+kbl(fake, booktabs = T)%>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "4em")
+```
+  
+\newpage  
+  
+## (Sub)mesoscale percent association to CHL anomalies at 30N and St. ALOHA
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+library(anytime)
+library(kableExtra)
+aloha <- read.csv("../data/outfiles/ALOHA_anomoly.csv")
+aloha <- round(aloha[2:ncol(aloha)], 2)
+colnames(aloha) <- c("Year", "+ Mesoscale (%)", "- Mesoscale (%)", "Submesoscale (%)", "Mixed (%)")
+#colnames(aloha) <- c("Year", "posMesoscale", "negMesoscale", "Submesoscale", "Mixed")
+ind   <- is.element(aloha$Year, c(2004, 2005, 2006, 2011, 2018))
+aloha <- aloha[ind, ]
+rownames(aloha) <- NULL
+
+north <- read.csv("../data/outfiles/30N_anomoly.csv")
+north <- round(north[2:ncol(north)], 2)
+colnames(north) <- c("Year", "+ Mesoscale (%)", "- Mesoscale (%)", "Submesoscale (%)", "Mixed (%)")
+#colnames(north) <- c("Year", "posMesoscale", "negMesoscale", "Submesoscale", "Mixed")
+ind   <- is.element(north$Year, c(2007, 2008, 2009, 2011, 2014, 2018, 2019))
+north <- north[ind, ]
+rownames(north) <- NULL
+
+back <- read.csv("../data/outfiles/ALOHA_backround.csv")
+back <- round(back[2:ncol(back)], 2)
+colnames(back) <- c("Year", "+ Mesoscale (%)", "- Mesoscale (%)", "Submesoscale (%)", "Mixed (%)")
+#colnames(north) <- c("Year", "posMesoscale", "negMesoscale", "Submesoscale", "Mixed")
+ind   <- is.element(back$Year, 2018)
+back <- back[ind, ]
+rownames(back) <- NULL
+
+both <- rbind(north, aloha)
+diff <- subset(aloha, Year == 2018) - subset(back, Year == 2018)
+diff$Year <- 2018
+rownames(diff) <- NULL
+```
+
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+kbl(both, booktabs = T, caption = "Results of the (sub)mesoscale percent contribution to each bloom around St. ALOHA and 30N between 2002 to 2019. Positively correlated percent contributions are marked with an asterisk.") %>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "8em") %>%
+  pack_rows("30 North", 1, nrow(north)) %>%
+  pack_rows("St. ALOHA", nrow(north)+1, nrow(both)) %>%
+  #row_spec(c(4, 5, 8, 11, 12, 17), bold = F, color = "black", background = "#add8e6") %>%
+  add_header_above(c("Table of (sub)mesoscale contributions: St. ALOHA" = 5), bold=T)
+```
+
+\newpage
+
+## (Sub)mesoscale percent association to CHL anomalies at 30N and St. ALOHA
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+kbl(both, booktabs = T, caption = "Results of the (sub)mesoscale percent contribution to each bloom around St. ALOHA and 30N between 2002 to 2019. Positively correlated percent contributions are marked with an asterisk.") %>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "8em") %>%
+  pack_rows("30 North", 1, nrow(north)) %>%
+  pack_rows("St. ALOHA", nrow(north)+1, nrow(both)) %>%
+  row_spec(12, bold = F, color = "black", background = "#add8e6") %>%
+  add_header_above(c("Table of (sub)mesoscale contributions: St. ALOHA" = 5), bold=T)
+
+kbl(back, booktabs = T)%>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "8em") %>%
+  row_spec(1, bold = F, color = "black", background = "#add8e6")
+#latex_options = c("striped")
+
+```
+  
+\newpage
+
+## (Sub)mesoscale percent association to CHL anomalies at 30N and St. ALOHA
+```{r, echo=FALSE, out.width='65%', fig.show='hold'}
+kbl(both, booktabs = T, caption = "Results of the (sub)mesoscale percent contribution to each bloom around St. ALOHA and 30N between 2002 to 2019. Positively correlated percent contributions are marked with an asterisk.") %>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "8em") %>%
+  pack_rows("30 North", 1, nrow(north)) %>%
+  pack_rows("St. ALOHA", nrow(north)+1, nrow(both)) %>%
+  row_spec(12, bold = F, color = "black", background = "#add8e6") %>%
+  add_header_above(c("Table of (sub)mesoscale contributions: St. ALOHA" = 5), bold=T)
+
+kbl(diff, booktabs = T)%>%
+  kable_styling(full_width = F, latex_options = "HOLD_position") %>%
+  column_spec(1, bold = F, color = "black") %>%
+  column_spec(2:5, width = "8em") %>%
+  row_spec(1, bold = F, color = "black", background = "#add8e6")
+#latex_options = c("striped")
+
+```
+\newpage
+
+## Case Study: Time-resolved (sub)mesoscale and CHL interactions
+  
+```{r, echo=FALSE, fig.align='center',  out.width='100%', fig.show='hold'}
+knitr::include_graphics('../figs/summer2018.png')
+```
+
+Using a Generalized Additive Model (GAM):
+
+`model = gam(chl ~ regions + s(time, by = regions) + s(lat, lon))`
+
+\newpage 
+  
+### Conclusion:  
+1) The GlobColor L3 CHL1 satellite product does a decent job at representing fine scale and seasonal CHL trends in the North East Pacific Ocean.  
+
+&nbsp;  
+
+2) Identifying anomalous CHL values as anything greater than $median + MAD$ of seasonally filtered CHL satellite product is necessary in North East Pacific Ocean because seasonal CHL trends are counter intuitive, and strongly driven by photo-acclimation.  
+
+&nbsp;  
+
+3) While the blooms appear to be associated with (sub)mesoscale features, thee nature of that association changes from year to year. 
+  
+\newpage 
+  
+### Acknowledgments:
+Angel White’s lab group: Tully Rohrer, James Allen, Reece James, Mathilde Dugenne, Fernanda Henderikx, Eric Shimabukuro, and Angel White.   
+&nbsp;  
+Funding: SCOPE - Simons Collaboration on Ocean Processes and Ecology  
+&nbsp;  
+UHM Oceanography department  
+  
+
+
+

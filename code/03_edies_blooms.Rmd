@@ -1,0 +1,611 @@
+---
+title: "eddies_blooms"
+author: "Jamie Ash"
+date: '2022-07-27'
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE}
+source("../R/functions.R")
+source("../R/libraries.R")
+rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
+knitr::opts_chunk$set(echo = TRUE)
+
+library(IndexNumR)
+library(imputeTS)
+library(sp)
+#library(rgdal)
+library(raster)
+library("plotrix")    
+# Load the data: chl
+```
+
+```{r}
+bloomdays = list(as.Date("2019-08-17"), as.Date("2020-08-08"), as.Date("2018-09-26"))
+lons = c(-170, -125)
+lats = c( 18,   37)
+domain  = extent(lons, lats)
+domain_edds = extent(domain[1]-2,
+                      domain[2]+2,
+                      domain[3]-2,
+                      domain[4]+2)
+```
+
+```{r}
+fronts = function(ras,
+                  downsize = 10,
+                  I = 2){
+  e    = extent(ras)
+  ras  = t(ras)
+  ras  = raster::flip(ras, direction = "x")
+  extent(ras) = e
+  
+  thresh = median(ras, na.rm = TRUE) + mad(ras, na.rm = TRUE)*I
+  idx  = which(values(ras) > thresh)
+  
+  e    = extent(ras)
+  s    = dim(ras)
+  lons = seq(from = e[1], to = e[2], length = s[1]) 
+  lats = seq(from = e[3], to = e[4], length = s[2]) 
+  grid = pracma::meshgrid(lons, lats)
+  fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = ras[idx])
+  idx = seq(1, nrow(fronts), downsize)
+  fronts = fronts[idx, ]
+  fronts
+}
+```
+
+```{r, warning = FALSE}
+# MET3 eddy data dowloaded directly from AVISO
+a_edds_2019 = load_edds(path = "..\\data\\infiles\\eddies\\",
+                   file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
+                   index = bloomdays[1],
+                   domain = domain_edds)
+
+c_edds_2019 = load_edds(path  = "..\\data\\infiles\\eddies\\",
+                    file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
+                    index  = bloomday[1],
+                    domain = domain_edds)
+
+# I'm uploading the large data set for the anomaly calculation
+chl_2019 = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chla8day",
+              lat = lats,
+              lon = lons,
+              sdate = bloomday[1] - 2,
+              edate = bloomday[1] + 16,
+              large = TRUE)
+
+sla_2019 = loadchl(url = "https://coastwatch.pfeg.noaa.gov/erddap",
+              id  = "nesdisSSH1day",
+              parameter = c("sla", "time", "latitude", "longitude"),   
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[1] - 1,
+              edate = bloomdays[1] + 1,
+              large = FALSE)
+
+fsle_2019 = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
+               patt = "fsle_po_2019.nc")
+
+gc()
+```
+
+```{r, warning = FALSE}
+# MET3 eddy data dowloaded directly from AVISO
+a_edds_2020 = load_edds(path = "..\\data\\infiles\\eddies\\",
+                   file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
+                   index = bloomdays[2],
+                   domain = domain_edds)
+
+c_edds_2020 = load_edds(path  = "..\\data\\infiles\\eddies\\",
+                    file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
+                    index  = bloomdays[2],
+                    domain = domain_edds)
+
+# I'm uploading the large data set for the anomaly calculation
+chl_2020 = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chla8day",
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[2] - 2,
+              edate = bloomdays[2] + 16,
+              large = TRUE)
+
+sla_2020 = loadchl(url = "https://coastwatch.pfeg.noaa.gov/erddap",
+              id  = "nesdisSSH1day",
+              parameter = c("sla", "time", "latitude", "longitude"),   
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[2] - 1,
+              edate = bloomdays[2] + 1,
+              large = FALSE)
+
+fsle_2020 = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
+               patt = "fsle_po_2020.nc")
+
+gc()
+```
+
+```{r, warning = FALSE}
+# MET3 eddy data dowloaded directly from AVISO
+a_edds_2018 = load_edds(path = "..\\data\\infiles\\eddies\\",
+                   file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
+                   index = bloomdays[3],
+                   domain = domain_edds)
+
+c_edds_2018 = load_edds(path  = "..\\data\\infiles\\eddies\\",
+                    file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
+                    index  = bloomdays[3],
+                    domain = domain_edds)
+
+# I'm uploading the large data set for the anomaly calculation
+chl_2018 = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chla8day",
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[3] - 2,
+              edate = bloomdays[3] + 16,
+              large = TRUE)
+
+sla_2018 = loadchl(url = "https://coastwatch.pfeg.noaa.gov/erddap",
+              id  = "nesdisSSH1day",
+              parameter = c("sla", "time", "latitude", "longitude"),   
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[3] - 1,
+              edate = bloomdays[3] + 1,
+              large = FALSE)
+
+fsle_2018 = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
+               patt = "fsle_po_2018.nc")
+
+gc()
+```
+
+Putting them all into a list
+```{r}
+fsle = list(fsle_2020, fsle_2019, fsle_2018)
+sla  = list(sla_2020,  sla_2019, sla_2018)
+chl  = list(chl_2020,  chl_2019, chl_2018)
+rm(fsle_2020, fsle_2019, fsle_2018, sla_2020,  sla_2019, sla_2018, chl_2020,  
+   chl_2019, chl_2019)
+```
+
+Match day because CHL is 8 day
+```{r}
+thisday = function(ras, this){
+  time = getZ(ras)
+  idx  = which(time == this)
+  ras  = subset(ras, idx)
+  time = time[idx]
+  ras  = setZ(ras, z = time, name = "time")
+  ras
+  }
+brickbreak = function(l){
+  time = lapply(l, FUN = getZ)
+  temp = brick(l)
+  time = as.Date(unlist(time))
+  temp = setZ(temp, z = time, name = "time")
+  temp
+  }
+
+sla  = brickbreak(sla)
+fsle = brickbreak(fsle)
+chl  = brickbreak(chl)
+gc()
+
+chl  = lapply(bloomdays, FUN = thisday, ras = chl)
+sla  = lapply(bloomdays, FUN = thisday, ras = sla)
+fsle = lapply(bloomdays, FUN = thisday, ras = fsle)
+gc()
+```
+
+correct oreantation
+```{r}
+oreant = function(ras, flip = NULL, t1 = FALSE, t2 = FALSE){
+  e    = extent(ras)
+  time = getZ(ras)
+  if(t1) ras = raster::t(ras)
+  if(!is.null(flip)) ras = raster::flip(ras,  direction = flip)
+  if(t2) ras = raster::t(ras)
+  extent(ras) = e
+  ras = setZ(ras, z = time, name = "time")
+  ras
+  }
+
+chl  = lapply(chl,  FUN = oreant, t1 = TRUE)
+sla  = lapply(sla,  FUN = oreant, flip = "y", t1 = TRUE)
+fsle = lapply(fsle, FUN = oreant, flip = "y", t1 = TRUE)
+```
+
+Crop to size
+```{r}
+fix_fsle = function(x) {
+  time = getZ(x)
+  e = extent(x) - c(360, 360, 0 ,0)
+  x  = x * -1
+  extent(x) = e
+  x = setZ(x, z = time, name = "time")
+  x
+  }
+
+fsle = lapply(fsle, fix_fsle)
+
+# 2020 and 2019 2018
+e = list(extent(-148, -128, 27, 36), 
+         extent(-170, -145, 26, 37),  
+         extent(-165, -130, 18, 36))
+
+fsle = mapply(crop, x = fsle, y = e)
+sla  = mapply(crop, x = sla,  y = e)
+chl  = mapply(crop, x = chl,  y = e)
+```
+
+Only CHL bloom values
+```{r}
+f = lapply(fsle, FUN = fronts, I = 4, downsize = 2)
+c = lapply(chl,  FUN = fronts, I = 1, downsize = 2)
+```
+
+function to plot eddies overlayed by blooms
+```{r, fig.width=10}
+
+eddies_bloom = function(bloom, a_eddies, c_eddies, 
+                        e  = extent(-170, -130, 18, 36),
+                        yaxes = FALSE,
+                        xaxes = FALSE,
+                        main = "",
+                        line = -1.5,
+                        xlab = "",
+                        ylab = ""){
+  range01 = function(x){(x-min(x))/(max(x)-min(x))}
+  
+  cols <- colvect(x = rep("grey22", 10),
+                  alpha = round(seq(from = 1, to = 0, length = 10), 2))
+  
+  alphagrey <- colvect(x = "grey22", alpha = 0.25)
+  
+  bloom$value = range01(bloom$value)
+  
+  jamie_theme(x = e[1:2],
+              y = e[3:4],
+              dt = FALSE,
+              xlab = xlab,
+              ylab = ylab,
+              main = main,
+              line = line,
+              adj = 0.03,
+              ylim = e[3:4],
+              xlim = e[1:2],
+              xaxes = xaxes,
+              yaxes = yaxes
+              )
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+  ind = unique(a_eddies$id)
+  for(i in ind){
+     pts <- subset(a_eddies, id == i)
+     x <- pts$lon
+     y <- pts$lat
+     polygon(pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lon,
+             pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lat,
+             lwd = 2)
+  ind <- unique(c_eddies$id)
+  for(i in ind){
+     pts <- subset(c_eddies, id == i)
+     x <- pts$lon
+     y <- pts$lat
+     polygon(pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lon,
+             pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lat,
+             lwd = 2)
+  }
+  wdmap = getMap(resolution = "high")
+  plot(wdmap, 
+       xlim = e[1:2], 
+       ylim = e[3:4], 
+       asp = 1, 
+       bg = "white", 
+       border = "black", 
+       col = "pink", 
+       add = TRUE,
+       lwd = 2)
+  }
+}
+```
+
+function to plot fronts overlaid by blooms
+```{r, fig.width = 10}
+blooms_fronts = function(bloom, currents, 
+                         xaxes = FALSE, 
+                         yaxes = FALSE, 
+                         main = "",
+                         xlab = "",
+                         ylab = "") {
+  range01 = function(x){(x-min(x))/(max(x)-min(x))}
+  bloom$value = range01(bloom$value)
+    
+  image(currents, 
+        col = gray.colors(10, start = 1, end= 0.5, gamma = 1),
+        axes = FALSE,
+        ylab = "",
+        xlab = "")
+  if(xaxes) {
+    axis(side = 1,
+    #at = at,
+    #labels = labels,
+    las = 1, 
+    lwd = 2, 
+    mgp = c(2, 1, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))}
+  if(yaxes){
+    axis(side = 2,
+    las  = 2, 
+    lwd  = 2, 
+    mgp  = c(1, 0.75, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))}
+  title(main = main,
+        cex.main = 1.75,
+        line = -1.5,
+        adj = 0.03)
+  title(ylab = ylab, cex.lab = 1.5, line = 2.5)
+  title(xlab = xlab, cex.lab = 1.5, line = 2.5)
+  box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+}
+```
+
+Plotting as one figure
+```{r, fig.width = 14, fig.height = 9}
+layout(matrix(c(1, 2,
+                3, 4), 
+              nrow = 2, 
+              ncol = 2, 
+              byrow = TRUE),
+       widths  = c(1, 1),
+       heights = c(1, 1))
+
+par(mar = c(0.5, 5, 5, 0.5))
+blooms_fronts(bloom = c[[1]], 
+              currents = fsle[[1]], 
+              yaxes = TRUE, 
+              main = "2020",
+              ylab = "Latitude")
+
+par(mar = c(0.5, 0.5, 5, 5))
+blooms_fronts(bloom = c[[2]], 
+              currents = fsle[[2]], 
+              main = "2019")
+
+par(mar = c(5, 5, 0.5, 0.5))
+eddies_bloom(bloom = c[[1]], 
+             a_eddies = a_edds_2020, 
+             c_eddies = c_edds_2020, 
+             e = extent(fsle[[1]]), 
+             xaxes = TRUE, 
+             yaxes = TRUE, 
+             main = "2020",
+             ylab = "Latitude",
+             xlab = "Longitude")
+
+par(mar = c(5, 0.5, 0.5, 5))
+eddies_bloom(bloom = c[[2]], 
+             a_eddies = a_edds_2019, 
+             c_eddies = c_edds_2019,
+             e = extent(fsle[[2]]), 
+             xaxes = TRUE,
+             main = "2019",
+             xlab = "Longitude")
+```
+
+
+
+I could just add 2018 to this file and do a cross correlation for that year
+```{r, fig.width=10}
+library(raster)
+auto_c = resample(chl[[3]],  fsle[[3]])
+auto_f = resample(fsle[[3]], fsle[[3]])
+
+u = mean(values(auto_f), na.rm = TRUE)
+o = sd(values(auto_f), na.rm = TRUE)
+m = max(values(auto_f), na.rm = TRUE)
+
+auto_c[auto_c < 0.1] = NA
+
+b <- stack(auto_f, auto_c)
+b <- aggregate(b, 2, mean)
+y <- corLocal(b[[1]], b[[2]], test=TRUE )
+
+# ------------------------------------------------------------------------------
+auto_s = resample(sla[[3]], chl[[3]])
+auto_c = resample(chl[[3]], chl[[3]])
+
+auto_c[auto_c < 0.1] = NA
+
+#b <- stack(auto_f, auto_c)
+b <- stack(auto_s, auto_c)
+b <- aggregate(b, 2, mean)
+
+#run correlation
+x <- corLocal(b[[1]], b[[2]], test=TRUE )
+
+#view pearson correlation
+# image(x[[1]])
+# plot(auto_c)
+
+# ------------------------------------------------------------------------------
+al = c(seq(1, 0, length = 13), seq(0, 1, length = 13))
+
+image(x[[1]], col = colvect(cmocean("balance")(26), al))
+contour(auto_s,
+        nlevels = 7,
+        labels= FALSE, 
+        #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = seq(0, 1, length = 10)),
+        col = "grey22",# colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = 0.5),
+        axes = FALSE,
+        add = TRUE)
+box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+
+# ------------------------------------------------------------------------------
+auto_f[auto_f > u + o*2] = m
+auto_f[auto_f < u + o*2] = NA
+
+image(y[[1]], col = colvect(cmocean("balance")(26), al))
+image(auto_f,
+      #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = seq(0, 1, length = 10)),
+      #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = 0.5),
+      col = "grey22",
+      axes = FALSE,
+      add = TRUE)
+box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+#funcrtion(ssh, eddies)
+ssh = sla[[2]]
+eddies = a_edds_2019
+image(ssh)
+ind <- unique(eddies$id)
+for(i in ind){
+   pts <- subset(eddies, id == i)
+   x <- pts$lon
+   y <- pts$lat
+   polygon(pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lon,
+           pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lat,
+           lwd = 2)
+}
+```
+
+```{r, fig.width = 10}
+
+ssh_bloom = function(ssh, bloom,current) {
+  range01 = function(x){(x-min(x))/(max(x)-min(x))}
+  bloom$value = range01(bloom$value)
+  current$value = range01(current$value)
+  
+  contour(ssh, nlevels = 5, drawlabels = FALSE, col =  colvect(rep("black", 5), alpha = seq(0, 1, length = 5)))
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+  points(current$lons, 
+         current$lats, 
+         col = colvect(rep("black", length(current$value)), alpha = current$value),
+         pch = 20,
+         cex = 1)
+  wdmap = getMap(resolution = "high")
+  plot(wdmap, 
+       xlim = e[1:2], 
+       ylim = e[3:4], 
+       asp = 1, 
+       bg = "white", 
+       border = "black", 
+       col = "pink", 
+       add = TRUE,
+       lwd = 2)
+  box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+  }
+
+ssh_bloom(ssh = sla[[1]], bloom = c[[1]], current = f[[1]])
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
