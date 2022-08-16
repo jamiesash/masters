@@ -116,8 +116,8 @@ knitr::include_graphics(c('..//figures/biomass_conc_area.png'))
 
 ## Figure 7: Spatial association of (sub)mesoscale features across the lifespan of the 2018 bloom
 \captionsetup{justification=justified,margin=3cm}
-```{r, eval = FALSE, echo=FALSE, fig.align='center', out.height = '65%', fig.show='hold', fig.cap = "Timeseries of bloom percent association (deviation from the background) of bloom values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent association is the percent of each (sub)mesoscale region’s area that is associated with a bloom feature."}
-knitr::include_graphics(c('..//figures/submeso_timeseries.png'))
+```{r, echo=FALSE, fig.align='center', out.height = '65%', fig.show='hold', fig.cap = "Timeseries of bloom percent association (deviation from the background) of bloom values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent association is the percent of each (sub)mesoscale region’s area that is associated with a bloom feature."}
+knitr::include_graphics(c('..//figures/submeso_timeseries_chla.png'))
 ```
 
 \newpage  
