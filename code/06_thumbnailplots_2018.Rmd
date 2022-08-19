@@ -6,8 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE, message = FALSE}
-source("../R/functions.R")
-source("../R/libraries.R")
+source("functions.R")
+source("libraries.R")
 rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -408,6 +408,9 @@ chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
               large = FALSE,
               by    = 30)
 
+
+# nesdisVHNnoaaSNPPnoaa20chlaGapfilledDaily_Lon0360
+
 load_nc = function(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\fsle\\",
                    patt = "fsle_po_2018.nc", 
                    vars = c("lat", "lon", "fsle_max", "time"),
@@ -452,7 +455,7 @@ extent(chl) = e
 gc()
 ```
 
-
+check oreantation
 ```{r}
 cmap = calc(chl, fun = mean, na.rm = TRUE)
 fmap = calc(fsle, fun = mean, na.rm = FALSE)

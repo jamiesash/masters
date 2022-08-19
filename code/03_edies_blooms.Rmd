@@ -6,8 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE, message = FALSE}
-source("../R/functions.R")
-source("../R/libraries.R")
+source("functions.R")
+source("libraries.R")
 rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -75,6 +75,7 @@ chl_2019 = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
               sdate = bloomday[1] - 2,
               edate = bloomday[1] + 16,
               large = TRUE)
+
 
 sla_2019 = loadchl(url = "https://coastwatch.pfeg.noaa.gov/erddap",
               id  = "nesdisSSH1day",
