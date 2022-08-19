@@ -6,12 +6,14 @@ library(plotrix)
 # Alphebetized packages --------------------------------------------------------
 # I've commented out the libraries I do not believe I'm using anymore
 library(anytime)
-#library(animation)
+library(animation)
 library(abind)
 library(bookdown)
 library(car)
+
 library(cmocean)
 library(dplyr)
+
 library(data.table)
 library(doParallel)
 library(foreach)
@@ -42,6 +44,7 @@ library(raster)
 library(spatialEco)
 library(stlplus)
 library(sp)
+library(sf)
 library(Thermimage)
 library(tidyverse)
 library(viridis)

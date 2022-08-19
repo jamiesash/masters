@@ -1505,7 +1505,8 @@ loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
   # C:/Users/james/AppData/Local/Temp/RtmpUzoLlB/raster
   data_info <- rerddap::info(id, url = url)
   
-  down_chl <- function(x, 
+  down_chl <- function(x,
+                       data_info = data_info,
                        longitude = lon, 
                        latitude  = lat, 
                        fields    = parameter, 
@@ -1565,8 +1566,8 @@ loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
                     latitude = lat, 
                     time = t, 
                     fields = parameter, 
-                    url = url_base)
-                    #store = disk()
+                    url = url_base
+                    )
     
     data <- nc_open(data$summary$filename)
     ras  <- ncvar_get(data)
@@ -2114,6 +2115,25 @@ bool = function(x){
   extent(boo) <- extent(x)
   boo <- setZ(boo, z = getZ(x), name = "time")
   boo
+}
+
+# oreant -----------------------------------------------------------------------
+
+oreant = function(ras, flip = NULL, t1 = FALSE, t2 = FALSE){
+  e    = extent(ras)
+  time = getZ(ras)
+  if(t1) ras = raster::t(ras)
+  if(!is.null(flip)) ras = raster::flip(ras,  direction = flip)
+  if(t2) ras = raster::t(ras)
+  extent(ras) = e
+  ras = setZ(ras, z = time, name = "time")
+  ras
+}
+
+# scale ------------------------------------------------------------------------
+# plotting the data
+scale <- function(x, to, from){   
+  (x - min(x))/(max(x)-min(x)) * (to - from) + from
 }
 
 
