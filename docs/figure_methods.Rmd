@@ -1,0 +1,124 @@
+---
+title: "figure_methods"
+author: "Jamie Ash"
+date: "2022-08-19"
+output: pdf_document
+---
+
+## General Processing
+
+The CZZ boarders where used as a mask to remove the coastal effects in the CHL 
+SLA, and FSLE data sets. Then a CHL anomaly was calculated by removing the 
+seasonal effects and long term climatologic effects from the raw CHL satellite 
+signal. CHL blooms values where identified as any point greater than the median
+plus the MAD per grid cell (across time) of the CHL anomaly. 
+
+## Table 1: Summary table of late summer CHL blooms in the NPSG
+
+**Methods:** To identify when particularly large blooms occurred in an 
+autonomous way, an STL filter was applied to the daily averaged time series of 
+the CHL satellite data set. Bloom time periods were identified as any period 
+above the mean and standard deviation of the residuals of the STL filter. 
+Periods where the bloom received for shorter than 7 days where ignored and 
+blooms that lasted longer than 14 days where chosen. Alternatively, start and 
+end dates of the blooms where chosen manualy by viewing weekly chlorophyll maps. 
+This proved to be more effective than a over engineered autonomous bloom 
+identification process.
+
+The bloom duration was found by subtracting the end from the start date. The 
+magnitude was defined as the maximum value the CHL satellite signal reached at 
+any point during the blooms. The bloom area was calculated as the maximum area 
+the bloom reached. The center longitude and latitude locations where found by 
+taking the average longitude and latitude location of each bloom point on the 
+day the bloom reached it's maximum area. To mitigate the effects of clouds, the 
+weekly chl product was used to find the bloom area and center. 
+
+**Discussion:** Summary statistics of each bloom around Stn. ALOHA and 30N 
+between 2002 to 2019. Magnitude taken as the maximum CHL $mg/m^3$ value the
+blooms reached, and area is the maximum area the bloom reached.
+
+## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
+
+Monthly images of CHL bloom values within the chosen study region of the NPSG. 
+Each row shows a unique year, and the five late summer months in which the 
+blooms occur. The Hawaiian islands are shown in the bottom left. Bloom values 
+are found using the CHL anomaly product.
+
+## Figure 2: Bloom centers and maximum area
+
+Bloom centers for all summer to fall blooms that occur between 2003-2021. The 
+area of each circle is equal to the maximum area each bloom reached, calculated 
+from the 1-day L3 CHL product (erdMH1chla1day).
+
+## Figure 3: Bloom duration and day of year
+
+Bar plot of the bloom duration for all summer to fall blooms that occur between 
+2003-2021. Start and end date of each bloom (table 1) found using an STL filter.
+The length of each bar is equal to the duration described in table 1, as well as 
+the start date of each bloom. The grey center line is the middle of each bloom, 
+found as the mean of the bloom start and end date
+
+## Figure 4: HPLC against Satellite CHL Comparison and CHL Climatologies
+
+Comparison of High-pressure Liquid Chromatography (HPLC) bottle samples against 
+the GlobColor CHL1 Lm3 satellite product. The generalized linear regression 
+(family = gamma) gives an $r^2$ value of $0.454$ with a significant fit 
+($p < 0.05$). Figure b) a box plot of the average monthly CHL satellite signal 
+across the 18 years of data. The light grey boxes are for the region at 30N, and 
+the dark grey box is for the region around Stn. ALOHA.
+
+## Figure 5:  k-means cluster analysis of (sub)mesoscale regions
+
+K-means cluster analysis (method = euclidean distance, k = 4, scale = 0-1) 
+applied to the FSLE, and SLA fields at St. ALOHA during the late summer months 
+(July-October) of 2018. The cluster analysis groups each data point into one of 
+four (sub)mesoscale regions: mesoscale positive, mesoscale negative, 
+submesoscale, and mixed regions.
+
+## Figure 6: Two late summer CHL blooms relationship to fronts and eddies
+
+Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies. Both blooms appear 
+to be associated with frontal features with little apparent association to 
+mesoscale eddies.
+
+## Figure 7: Spatio-temporal evolution of the 2018 bloom
+
+8 day composites showing the start and demise of the 2018 bloom in the NSPG. 
+Bloom values are chosen using the CHL anomaly. Strong frontal features  from 
+FSLE satellite data are shown as black lines. Day of the year is shown in the 
+top left corner of each plot.
+
+## Figure 8: Satellite-based time series of the 2018 bloom
+
+Timeseries progression of the onset and demise of the 2018 bloom in the NPSG. 
+Black and grey lines (95% confidence interval) are a GAM smoother. Figure a) 
+shows the surface, figure b) shows the biomass, and figure c) shows the depth 
+integrated CHL concentration.
+
+## Figure 9: Spatial association of (sub)mesoscale features across the lifespan of the 2018 bloom
+
+Timeseries of bloom percent association (deviation from the background) of bloom 
+values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent 
+association is the percent of each (sub)mesoscale region’s area that is 
+associated with a bloom feature.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
