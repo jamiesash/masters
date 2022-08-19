@@ -317,7 +317,6 @@ Data download
 lons = c(-165, -130)
 lats = c( 22,   35)
  
-#sdate = as.Date("2003-01-01")
 # I had 2003-12-01 for the old sum table
 sdate = as.Date("2003-01-01")
 edate = as.Date("2021-12-01")
@@ -325,7 +324,7 @@ edate = as.Date("2021-12-01")
 # https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-chl-multi_cci-l3-chl_4km_daily-rep-v02?
 # "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_interpolated_4km_daily-rep?"
 # Monthly
-#url = "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_4km_monthly-rep?"
+# url = "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_4km_monthly-rep?"
 # chl = loadsat(var = "CHL",
 #               sdate = sdate,
 #               edate = edate,
@@ -362,7 +361,7 @@ gc()
 
 Calculate CHL anomaly and boolian bloom array
 ```{r, message = FALSE, warning = FALSE}
-# I receive an warning when detrending for cells of all NA values (hawaii)
+# I receive an warning when detrending for cells of all NA values (Hawaii)
 # chl anom. calc. needs at least one full year to work correctly
 chl_a = anomalize(chl, detrend = FALSE)
 chl_b = bool(chl_a)
@@ -372,21 +371,6 @@ gc()
 STL Filter: calculate anomaly, seasonality and climatology 
 ```{r, message = FALSE, warning = FALSE}
 ts   = filt_stl(ras = chl, res = 1, sub.start = 8)
-gc()
-```
-
-FFT: calculate anomaly, seasonality and climatology 
-```{r, message = FALSE, warning = FALSE}
-fft_raw  = cellStats(chl, stat = mean, na.rm = TRUE)
-fft_raw = as.numeric(fft_raw)
-idx = !is.na(fft_raw)
-fft_t = getZ(chl)
-fft_t = fft_t[idx]
-fft_raw = fft_raw[idx]
-
-fft_clim = nff(x = fft_raw, n = 50L)
-fft_clim = fft_clim$signal
-fft_anom = fft_raw - fft_clim/100
 gc()
 ```
 
@@ -476,70 +460,6 @@ plot(wdmap,
 box(which = "plot", 
     lty = "solid", 
     lwd = 3) 
-```
-
-## STL filter {.tabset}
-
-### Raw
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-t = getZ(chl)
-jamie_theme(t, ts$raw, main = "30N raw", dt = FALSE, ylim = range(ts$raw, na.rm = TRUE))
-points(t, ts$raw, pch = 20)
-```
-
-### Anomaly
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-thresh = median(ts$anom, na.rm = TRUE) + mad(ts$anom, na.rm = TRUE)
-idx    = ts$anom > thresh
-anom_b = ts$anom[idx]
-t_b = t[idx]
-
-jamie_theme(t, ts$anom, main = "30N anomaly", dt = FALSE, ylim = range(ts$anom,na.rm = TRUE))
-points(t, ts$anom, pch = 20)
-points(t_b, anom_b, pch = 20, col = "red")
-
-head(idx[100:200], 25)
-```
-
-### Climatology
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-jamie_theme(t, ts$clim, main = "30N climatology", dt = FALSE, ylim = range(ts$clim, na.rm = TRUE))
-points(t, ts$clim, pch = 20) 
-```
-
-### Seasonanilty
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-jamie_theme(t, ts$seas, main = "30N seasonanilty", dt = FALSE, ylim = range(ts$seas))
-points(t, ts$seas, pch = 20)
-```
-
-### Raw vs climate
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-
-jamie_theme(t, ts$raw, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(ts$raw, na.rm = TRUE))
-points(t, ts$raw, pch = 20)
-points(t, ts$seas_clim, pch = 20, col = "red")
-```
-
-## FFT Data Vis {.tabset}
-
-### Climate and raw signal
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-jamie_theme(fft_t, fft_raw, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(fft_raw, na.rm = TRUE))
-points(fft_t, fft_raw, pch = 20)
-points(fft_t, fft_clim/100, pch = 20, col = "red")
-```
-
-### Anomaly signal
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
-thresh = median(fft_anom, na.rm = TRUE) + mad(fft_anom, na.rm = TRUE)
-idx    = fft_anom> thresh
-fft_anom_b = fft_anom[idx]
-fft_t_b = fft_t[idx]
-
-jamie_theme(fft_t, fft_anom, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(fft_anom, na.rm = TRUE))
-points(fft_t, fft_anom, pch = 20)
-points(fft_t_b, fft_anom_b, pch = 20, col = "red")
 ```
 
 ## Visualize Summary Table {.tabset}
@@ -751,8 +671,85 @@ box(which = "plot", lty = "solid", lwd = 3, col = colvect("grey22", alpha = 0.9)
 
 
 
+FFT: calculate anomaly, seasonality and climatology 
+```{r, eval = FALSE, message = FALSE, warning = FALSE}
+fft_raw  = cellStats(chl, stat = mean, na.rm = TRUE)
+fft_raw = as.numeric(fft_raw)
+idx = !is.na(fft_raw)
+fft_t = getZ(chl)
+fft_t = fft_t[idx]
+fft_raw = fft_raw[idx]
+
+fft_clim = nff(x = fft_raw, n = 50L)
+fft_clim = fft_clim$signal
+fft_anom = fft_raw - fft_clim/100
+gc()
+```
 
 
+## STL filter {.tabset}
+
+### Raw
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+t = getZ(chl)
+jamie_theme(t, ts$raw, main = "30N raw", dt = FALSE, ylim = range(ts$raw, na.rm = TRUE))
+points(t, ts$raw, pch = 20)
+```
+
+### Anomaly
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+thresh = median(ts$anom, na.rm = TRUE) + mad(ts$anom, na.rm = TRUE)
+idx    = ts$anom > thresh
+anom_b = ts$anom[idx]
+t_b = t[idx]
+
+jamie_theme(t, ts$anom, main = "30N anomaly", dt = FALSE, ylim = range(ts$anom,na.rm = TRUE))
+points(t, ts$anom, pch = 20)
+points(t_b, anom_b, pch = 20, col = "red")
+
+head(idx[100:200], 25)
+```
+
+### Climatology
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+jamie_theme(t, ts$clim, main = "30N climatology", dt = FALSE, ylim = range(ts$clim, na.rm = TRUE))
+points(t, ts$clim, pch = 20) 
+```
+
+### Seasonanilty
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+jamie_theme(t, ts$seas, main = "30N seasonanilty", dt = FALSE, ylim = range(ts$seas))
+points(t, ts$seas, pch = 20)
+```
+
+### Raw vs climate
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+
+jamie_theme(t, ts$raw, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(ts$raw, na.rm = TRUE))
+points(t, ts$raw, pch = 20)
+points(t, ts$seas_clim, pch = 20, col = "red")
+```
+
+## FFT Data Vis {.tabset}
+
+### Climate and raw signal
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+jamie_theme(fft_t, fft_raw, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(fft_raw, na.rm = TRUE))
+points(fft_t, fft_raw, pch = 20)
+points(fft_t, fft_clim/100, pch = 20, col = "red")
+```
+
+### Anomaly signal
+```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+thresh = median(fft_anom, na.rm = TRUE) + mad(fft_anom, na.rm = TRUE)
+idx    = fft_anom> thresh
+fft_anom_b = fft_anom[idx]
+fft_t_b = fft_t[idx]
+
+jamie_theme(fft_t, fft_anom, main = "aloha raw to climate comparison", dt = FALSE, ylim = range(fft_anom, na.rm = TRUE))
+points(fft_t, fft_anom, pch = 20)
+points(fft_t_b, fft_anom_b, pch = 20, col = "red")
+```
 
 
 
