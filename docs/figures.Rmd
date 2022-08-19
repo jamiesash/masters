@@ -68,7 +68,7 @@ kbl(tbl,
 
 ## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
 \captionsetup{justification=justified,margin=1.5cm}
-```{r,echo=FALSE, fig.align='center',  fig.fullwidth=TRUE, out.width='75%', fig.show='hold', fig.cap="Monthly images of CHL bloom values within the chosen study region of the NPSG. Each row shows a unique year, and the five late summer months in which the blooms occur. The Hawaiian islands are shown in the bottom left. Bloom values are found using the CHL anomaly product. "}
+```{r,echo=FALSE, fig.align='center',  fig.fullwidth=TRUE, out.width='75%', fig.show='hold', fig.cap="Monthly images of CHL bloom values within the chosen study region of the NPSG. Each row shows a unique year, and the five late summer months in which the blooms occur. The Hawaiian islands are shown in the bottom left. Bloom values are found using the CHL anomaly product."}
 knitr::include_graphics(c('../figures/thumbnail_20220713_latesummer.png'))
 ```
 
