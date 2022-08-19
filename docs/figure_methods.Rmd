@@ -31,11 +31,10 @@ any point during the blooms. The bloom area was calculated as the maximum area
 the bloom reached. The center longitude and latitude locations where found by 
 taking the average longitude and latitude location of each bloom point on the 
 day the bloom reached it's maximum area. To mitigate the effects of clouds, the 
-weekly chl product was used to find the bloom area and center. 
+weekly chl product was used to find the bloom area and center. Blooms that 
+occurred for less than two weeks where excluded.
 
-**Discussion:** Summary statistics of each bloom around Stn. ALOHA and 30N 
-between 2002 to 2019. Magnitude taken as the maximum CHL $mg/m^3$ value the
-blooms reached, and area is the maximum area the bloom reached.
+**Discussion:** Frequency, magnitude, location, typical duration.
 
 ## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
 
