@@ -1,0 +1,46 @@
+---
+title: "Untitled"
+output: pdf_document
+date: "2022-08-19"
+---
+
+## TO do:
+  1. rerun sumtable for all years
+  2. choose start and end dates by hand 
+  3. rerun sumtable with weekly chl
+  4. update duration bar plot, and bloom centers plot
+  5. add chl anomaly to sumtable (30N too strong)
+  6. monthly composites choose big blooms, have supplementary of all or video
+  7. Cluster analysis on lat lon bloom centers
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

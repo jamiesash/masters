@@ -5,6 +5,8 @@ date: "2022-08-19"
 output: pdf_document
 ---
 
+# Pre-Processing ---------------------------------------------------------------
+
 ## General Processing
 
 The CZZ boarders where used as a mask to remove the coastal effects in the CHL 
@@ -12,6 +14,19 @@ SLA, and FSLE data sets. Then a CHL anomaly was calculated by removing the
 seasonal effects and long term climatologic effects from the raw CHL satellite 
 signal. CHL blooms values where identified as any point greater than the median
 plus the MAD per grid cell (across time) of the CHL anomaly. 
+
+## Figure 4: HPLC against Satellite CHL Comparison and CHL Climatologies
+
+Comparison of High-pressure Liquid Chromatography (HPLC) bottle samples against 
+the GlobColor CHL1 Lm3 satellite product. The generalized linear regression 
+(family = gamma) gives an $r^2$ value of $0.454$ with a significant fit 
+($p < 0.05$). Figure b) a box plot of the average monthly CHL satellite signal 
+across the 18 years of data. The light grey boxes are for the region at 30N, and 
+the dark grey box is for the region around Stn. ALOHA.
+
+**Discussion:** Done
+
+# Characterizing CHL blooms ----------------------------------------------------
 
 ## Table 1: Summary table of late summer CHL blooms in the NPSG
 
@@ -34,37 +49,54 @@ day the bloom reached it's maximum area. To mitigate the effects of clouds, the
 weekly chl product was used to find the bloom area and center. Blooms that 
 occurred for less than two weeks where excluded.
 
-**Discussion:** Frequency, magnitude, location, typical duration.
-
 ## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
 
-Monthly images of CHL bloom values within the chosen study region of the NPSG. 
-Each row shows a unique year, and the five late summer months in which the 
-blooms occur. The Hawaiian islands are shown in the bottom left. Bloom values 
-are found using the CHL anomaly product.
+**Methods:** To generate the monthly thumbnail plots of bloom values, monthly 
+composites of CHL data were used, and bloom values from the late summer months 
+from June - October were plotted.  
 
 ## Figure 2: Bloom centers and maximum area
 
-Bloom centers for all summer to fall blooms that occur between 2003-2021. The 
-area of each circle is equal to the maximum area each bloom reached, calculated 
-from the 1-day L3 CHL product (erdMH1chla1day).
+**Methods:** Bloom center from table 1 where plotted along with their maximum 
+area represented as circles. The area of each circle is equal to the maximum 
+area each amorphic bloom reached.
 
 ## Figure 3: Bloom duration and day of year
 
-Bar plot of the bloom duration for all summer to fall blooms that occur between 
-2003-2021. Start and end date of each bloom (table 1) found using an STL filter.
-The length of each bar is equal to the duration described in table 1, as well as 
-the start date of each bloom. The grey center line is the middle of each bloom, 
-found as the mean of the bloom start and end date
+**Methods:** Bar plot of the bloom duration for all summer to fall blooms that 
+occur between 2003-2021. Start and end date of each bloom (table 1) found using 
+an STL filter. The length of each bar is equal to the duration described in 
+table 1, as well as the start date of each bloom. The grey center line is the 
+date each bloom reached it's maximum magnitude. Blooms lasting less than 14 days
+were omitted. 
 
-## Figure 4: HPLC against Satellite CHL Comparison and CHL Climatologies
+**Discussion:** While meso-scale blooms the size of Hawaii (big island) occur 
+every year, blooms larger than $10,000 km^2$ occur semi-annually. These blooms 
+tend to last approximately 20 - 100 days. A few blooms (2007, 2015, 2020) begin 
+in the late summer, August - September, but persist until the winter where they 
+are engulfed by the subtropical CHL front, making a true end date difficult to 
+distinguish. Conversely some blooms notably 2005 and 2019 (Toyoda explains 
+these), begin as the subtropical CHL front recedes and a true start date is 
+difficult to distinguish. In some cases, 2007 and 2020 multiple large blooms 
+occur in a single year. Interestingly, the maximum magnitude of each bloom 
+occurs towards the XXXX or the bloom's lifespan. 
 
-Comparison of High-pressure Liquid Chromatography (HPLC) bottle samples against 
-the GlobColor CHL1 Lm3 satellite product. The generalized linear regression 
-(family = gamma) gives an $r^2$ value of $0.454$ with a significant fit 
-($p < 0.05$). Figure b) a box plot of the average monthly CHL satellite signal 
-across the 18 years of data. The light grey boxes are for the region at 30N, and 
-the dark grey box is for the region around Stn. ALOHA.
+Bloom magnitudes range from 0.17 - 3.00, with a median value of $0.67 [mg/m^2]$, 
+approximately $\times 4.5$ the background $1-1.5 [mg/m^3]$. Some of the stronger
+blooms occurred along 32N in 2011, 2007, and 2020. The magnitude of the raw 
+chlorophyll satellite signal does not taking into account the northward 
+chlorophyll gradient. When considering the chlorophyll anomaly's maximum
+magnitude that does correct for the northward chlorophyll gradient, the years
+XXXX, XXXX had the strongest blooms which occurred at Stn. Aloha and 30N 
+respectively. 
+
+The area of the blooms range from $1.37 \times 10^4 [km^2]$ in 2012 to  
+$9.43 \times 10^5 [km^2]$ in 2018. This excludes blooms less than 
+$1 \times 10^5 [km^2]$ and those that are engulfed by the subtropical 
+chlorophyll front. The blooms appear to cluster in three locations, that is, 
+near Stn. ALOHA at [25N, -152W], at approximately [32N, 160W] and [32N, 140W]. 
+
+# 2018 Case Study --------------------------------------------------------------
 
 ## Figure 5:  k-means cluster analysis of (sub)mesoscale regions
 
@@ -94,7 +126,7 @@ Black and grey lines (95% confidence interval) are a GAM smoother. Figure a)
 shows the surface, figure b) shows the biomass, and figure c) shows the depth 
 integrated CHL concentration.
 
-## Figure 9: Spatial association of (sub)mesoscale features across the lifespan of the 2018 bloom
+## Figure 9: (Sub)mesoscale features across the lifespan of the 2018 bloom
 
 Timeseries of bloom percent association (deviation from the background) of bloom 
 values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent 
