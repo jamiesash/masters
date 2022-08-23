@@ -12,6 +12,10 @@ date: "2022-08-19"
   5. add chl anomaly to sumtable (30N too strong)
   6. monthly composites choose big blooms, have supplementary of all or video
   7. Cluster analysis on lat lon bloom centers
+  8. Add backround signal to figure 9
+  9. Add dates to figure 6
+  10. add a color bar to all bloom plots
+  11. fig 6 add eddy labesl, FSLE color bars, chl colobar
 
 
 
