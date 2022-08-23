@@ -127,9 +127,10 @@ Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies.
 
 **Methods:** A weekly layer of the CHL satellite product that occurred closest 
 to the date that the bloom reached it's maximum area was subset for the 2020 
-bloom and the 2019 bloom. Cyclonic and anti-cyclonic eddies as well, as FSLE 
-frontal features where overlaid on the CHL satellite product. Both cyclonic and 
-anti-cyclonic eddies are plotted as black lines. 
+bloom and the 2019 bloom. Only the bloom values where plotted. Cyclonic and 
+anti-cyclonic eddies as well, as FSLE frontal features where overlaid on the CHL 
+satellite product. Both cyclonic and anti-cyclonic eddies are plotted as black 
+lines. 
 
 **Discussion:** Both blooms appear to be associated with frontal features with 
 little apparent association to mesoscale eddies.
@@ -141,13 +142,16 @@ Bloom values are chosen using the CHL anomaly. Strong frontal features  from
 FSLE satellite data are shown as black lines. Day of the year is shown in the 
 top left corner of each plot.
 
-**Methods:** 
+**Methods:** The 8-day CHL product was used to plot the weekly layers of the 
+bloom values across the lifespan of the 2018 bloom. Strong frontal features i.e. 
+FSLE values greater than the mean plus the standard deviations  of the daily 
+FSLE field were over laid on the bloom points.
 
 **Discussion:** 
 
 ## Figure 8: Satellite-based time series of the 2018 bloom
 
-Timeseries progression of the onset and demise of the 2018 bloom in the NPSG. 
+Time-series progression of the onset and demise of the 2018 bloom in the NPSG. 
 Black and grey lines (95% confidence interval) are a GAM smoother. Figure a) 
 shows the surface, figure b) shows the biomass, and figure c) shows the depth 
 integrated CHL concentration.

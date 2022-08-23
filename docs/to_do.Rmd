@@ -16,6 +16,9 @@ date: "2022-08-19"
   9. Add dates to figure 6
   10. add a color bar to all bloom plots
   11. fig 6 add eddy labesl, FSLE color bars, chl colobar
+  12. fig 6 might not be subseting CHL correctly
+  13. Change plots to not be bloom values just a 0.1 cut off of the anomaly. 
+      It's difficult tot describe
 
 
 
