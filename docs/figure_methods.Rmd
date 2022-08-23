@@ -98,7 +98,7 @@ near Stn. ALOHA at [25N, -152W], at approximately [32N, 160W] and [32N, 140W].
 
 # 2018 Case Study --------------------------------------------------------------
 
-## Figure 5:  k-means cluster analysis of (sub)mesoscale regions
+## Figure 6:  k-means cluster analysis of (sub)mesoscale regions
 
 K-means cluster analysis (method = euclidean distance, k = 4, scale = 0-1) 
 applied to the FSLE, and SLA fields at St. ALOHA during the late summer months 
@@ -106,11 +106,33 @@ applied to the FSLE, and SLA fields at St. ALOHA during the late summer months
 four (sub)mesoscale regions: mesoscale positive, mesoscale negative, 
 submesoscale, and mixed regions.
 
-## Figure 6: Two late summer CHL blooms relationship to fronts and eddies
+**Methods:** To group the parameters into (sub)mesoscale categories, we take the
+approach outlined by Gou et al. (40) where k-means clustering algorithm (k = 4) 
+is used to group the SLA and FSLE data points into one of four physical regions 
+based on the clusters centroid location in FSLE-SLA space (Figure 4) i.e. 
+positive mesoscale (anti-cyclonic eddies), negative mesoscale (cyclonic eddies), 
+sub-mesoscale (fronts) and mixed. 
 
-Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies. Both blooms appear 
-to be associated with frontal features with little apparent association to 
-mesoscale eddies.
+We applied the k-means cluster analysis to the daily SLA and FSLE fields within 
+the study region across the lifetime of the 2018 bloom: 2018-07-28 to 2018-10-15 
+(Figure 5). Each group, 1-4, was assigned it's respective (sub)mesoscale region 
+i.e. anti-cyclonic eddy regions (blue), cyclonic eddy regions (orange), frontal 
+regions (yellow) and mixed regions (purple). 
+
+**Discussion:** 
+
+## Figure 5: Two late summer CHL blooms relationship to fronts and eddies
+
+Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies. 
+
+**Methods:** A weekly layer of the CHL satellite product that occurred closest 
+to the date that the bloom reached it's maximum area was subset for the 2020 
+bloom and the 2019 bloom. Cyclonic and anti-cyclonic eddies as well, as FSLE 
+frontal features where overlaid on the CHL satellite product. Both cyclonic and 
+anti-cyclonic eddies are plotted as black lines. 
+
+**Discussion:** Both blooms appear to be associated with frontal features with 
+little apparent association to mesoscale eddies.
 
 ## Figure 7: Spatio-temporal evolution of the 2018 bloom
 
@@ -119,12 +141,20 @@ Bloom values are chosen using the CHL anomaly. Strong frontal features  from
 FSLE satellite data are shown as black lines. Day of the year is shown in the 
 top left corner of each plot.
 
+**Methods:** 
+
+**Discussion:** 
+
 ## Figure 8: Satellite-based time series of the 2018 bloom
 
 Timeseries progression of the onset and demise of the 2018 bloom in the NPSG. 
 Black and grey lines (95% confidence interval) are a GAM smoother. Figure a) 
 shows the surface, figure b) shows the biomass, and figure c) shows the depth 
 integrated CHL concentration.
+
+**Methods:** 
+
+**Discussion:** 
 
 ## Figure 9: (Sub)mesoscale features across the lifespan of the 2018 bloom
 
@@ -133,7 +163,13 @@ values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent
 association is the percent of each (sub)mesoscale region’s area that is 
 associated with a bloom feature.
 
-
+**Methods:** The total percent of bloom values in the CHL anomaly field that 
+coincided (spatially and temporarily) with each (sub)mesoscale region was 
+calculated at daily intervals and represented as a time-series (Figure (9). To 
+find the effect each region had on the bloom association to each (sub)mesoscale 
+region, the daily background signal was subtracted from each time-series. The 
+background signal was calculated by finding the total percent by day of points 
+in the CHL anomaly fields that are considered bloom values. 
 
 
 
