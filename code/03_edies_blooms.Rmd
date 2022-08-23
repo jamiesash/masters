@@ -175,6 +175,7 @@ rm(fsle_2020, fsle_2019, fsle_2018, sla_2020,  sla_2019, sla_2018, chl_2020,
 
 Match day because CHL is 8 day
 ```{r}
+# this might not be subseting CHL correctly
 thisday = function(ras, this){
   time = getZ(ras)
   idx  = which(time == this)
@@ -182,7 +183,9 @@ thisday = function(ras, this){
   time = time[idx]
   ras  = setZ(ras, z = time, name = "time")
   ras
-  }
+}
+
+# convert raster brick into a list of raster layers
 brickbreak = function(l){
   time = lapply(l, FUN = getZ)
   temp = brick(l)
