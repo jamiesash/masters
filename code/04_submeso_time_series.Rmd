@@ -121,7 +121,7 @@ jamie_theme <- function(x,
 
 ```
 
-
+load data
 ```{r}
 blooms = read.csv("../data/outfiles/full_sum.csv")
 # subseting just 2018 for case study
@@ -154,6 +154,7 @@ sla = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\sla\
 gc()
 ```
 
+fix oreantation
 ```{r}
 # for transposing and flippig the raster 
 oreant = function(ras, flip = NULL, t1 = FALSE, t2 = FALSE){
@@ -192,6 +193,7 @@ chla = anomalize(ras = chl, detrend = FALSE)
 chlb = bool(x = chla)
 gc()
 ```
+
 Make FSLE and CHL them the same time domain. Make FSLE same temporal resolution as CHL
 ```{r}
 # rasters area list of rasters like c(ras1, ras2, ras3)
@@ -306,7 +308,7 @@ xyz = xyz[!is.na(xyz$fsle),]
 gc()
 ```
 
-Kcluster by day
+Kcluster by day produce table
 ```{r, message = FALSE}
 kcluster = function(x){
   x$fsle = scale01(x$fsle)
