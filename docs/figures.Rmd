@@ -98,22 +98,21 @@ knitr::include_graphics(c('..//figures/bloom_durations_20220810.png'))
 ```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE, fig.show='hold',out.width = "55%", fig.cap="Comparison of High-pressure Liquid Chromatography (HPLC) bottle samples against the GlobColor CHL1 Lm3 satellite product. The generalized linear regression (family = gamma) gives an $r^2$ value of $0.454$ with a significant fit ($p < 0.05$). Figure b) a box plot of the average monthly CHL satellite signal across the 18 years of data. The light grey boxes are for the region at 30N, and the dark grey box is for the region around Stn. ALOHA."}
 knitr::include_graphics( '..//figures/HPLC_CHL_clim.png')
 ```
-  
-\newpage  
-
-\captionsetup{justification=justified,margin=1cm}
-## Figure 5:  k-means cluster analysis of (sub)mesoscale regions
-```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE, out.width="100%", fig.show='hold', fig.cap="K-means cluster analysis (method = euclidean distance, k = 4, scale = 0-1) applied to the FSLE, and SLA fields at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions."}
-knitr::include_graphics('..//figures//triplot_20220802.png')
-``` 
-
 \newpage 
 
-## Figure 6: Two late summer CHL blooms relationship to fronts and eddies
+## Figure 5: Two late summer CHL blooms relationship to fronts and eddies
 \captionsetup{justification=justified,margin=0cm}
 ```{r, echo=FALSE, fig.align='center',  fig.fullwidth=TRUE, out.width='100%', fig.show='hold', fig.cap = "Plankton bloom for 2019 and 2020 overlaid by FSLE and eddies. Both blooms appear to be associated with frontal features with little apparent association to mesoscale eddies."}
 knitr::include_graphics(c('..//figures/eddies_fronts_blooms.png'))
 ```
+
+\newpage  
+
+\captionsetup{justification=justified,margin=1cm}
+## Figure 6:  k-means cluster analysis of (sub)mesoscale regions
+```{r, echo=FALSE, fig.align='center', fig.fullwidth=TRUE, out.width="100%", fig.show='hold', fig.cap="K-means cluster analysis (method = euclidean distance, k = 4, scale = 0-1) applied to the FSLE, and SLA fields at St. ALOHA during the late summer months (July-October) of 2018. The cluster analysis groups each data point into one of four (sub)mesoscale regions: mesoscale positive, mesoscale negative, submesoscale, and mixed regions."}
+knitr::include_graphics('..//figures//triplot_20220802.png')
+``` 
 
 \newpage  
 
