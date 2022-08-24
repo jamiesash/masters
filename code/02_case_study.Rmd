@@ -382,15 +382,6 @@ edate = as.Date(blooms$edate[idx]) + 30
 lons = c(-165, -130)
 lats = c( 20,   36)
 
-fsle = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
-               patt = "fsle_po_2018.nc")
-gc()
-
-sla  = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\sla\\",
-               patt = "SLA_dt_2018.nc",
-               vars = c("latitude", "longitude", "sla", "time"))
-gc()
-
 # should try loading chla data from ERDDAP. Or just anomaly this in one function 
 # I need to make sure I'm not saving a fuck tone of files
 # I'm uploading the large data set for the anomaly calculation
@@ -426,55 +417,6 @@ gc()
 
 Correct oreantation
 ```{r}
-# e    = extent(sla)
-# time = getZ(sla)
-# sla = t(sla)
-# sla = raster::flip(sla,  direction = "y")
-# extent(sla) = e
-# sla = setZ(sla, z = time, name = "time")
-# 
-# e    = extent(fsle)
-# time = getZ(fsle)
-# fsle = fsle * -1
-# fsle = t(fsle)
-# fsle = raster::flip(fsle,  direction = "y")
-# extent(fsle) = e
-# fsle = setZ(fsle, z = time, name = "time")
-# 
-# gc()
-# 
-# e = extent(chl)
-# time = getZ(chl)
-# chl = t(chl)
-# chl = setZ(chl, z = time, name = "time")
-# extent(chl) = e
-# 
-# gc()
-
-```
-
-Make FSLE and CHL them the same time domain. Make FSLE same temporal resolution as CHL
-```{r}
-# match all the dates
-# tc = getZ(chl)
-# tf = getZ(fsle)
-# ts = getZ(sla)
-# tf = as.numeric(tf)
-# tc = as.numeric(tc)
-# ts = as.numeric(ts)
-# 
-# idx  = which(is.element(tf, tc))
-# tf   = subset(tf, is.element(tf, tc))
-# fsle = raster::subset(fsle, idx)
-# fsle = setZ(fsle, z = as.Date(tf), name = "time")
-# 
-# idx = which(is.element(ts, tc))
-# tf  = subset(tf, is.element(ts, tc))
-# sla = raster::subset(sla, idx)
-# sla = setZ(sla, z = as.Date(ts), name = "time")
-# 
-# rm(tc, tf, idx, t, e)
-# gc()
 ```
 
 Remove Region around Hawaii. CZ fornow 
@@ -483,44 +425,6 @@ chl = bufcoast(chl,
                region = "Hawaiian Islands", 
                path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
 gc()
-```
-
-cropping them to the same extent
-```{r crop}
-# e = extent(-165, -130, 23, 35)
-# 
-# fsle = raster::crop(fsle, e)
-# sla  = raster::crop(sla,  e)
-# chl  = raster::crop(chl,  e)
-# 
-# # slight rounding errors
-# extent(chl)  = e
-# gc()
-```
-
-Making all same size and shape
-```{r resample}
-# resample = function(ras, to, method = "bilinear"){
-#   raster::crs(ras) = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
-#   t = getZ(to)
-#   e = extent(to)
-#   extent(ras) = extent(e)
-#   ras = raster::resample(ras,  to, method = method)
-#   extent(ras) = e
-#   ras = setZ(ras, z = t, name = "time") 
-#   ras
-#   }
-# 
-# chl  = resample(chl, to = fsle)
-# gc()
-# sla  = resample(sla, to = fsle)
-# gc()
-# fsle = resample(fsle, to = fsle)
-# gc()
-# 
-# fsle = setZ(fsle, z = as.Date(tf), name = "time")
-# sla  = setZ(sla,  z = as.Date(ts), name = "time")
-# chl  = setZ(chl,  z = as.Date(tc), name = "time")
 ```
 
 Calculate CHL anomaly
@@ -537,64 +441,6 @@ Subset time-span of interest: 2018 summer bloom
 chl_2018  = timesnip(chl,  as.Date(sdate), as.Date(edate))
 chla_2018 = timesnip(chla, as.Date(sdate), as.Date(edate))
 chlb_2018 = timesnip(chlb, as.Date(sdate), as.Date(edate))
-
-# fsle_2018 = timesnip(fsle,  as.Date(sdate), as.Date(edate))
-# sla_2018  = timesnip(sla, as.Date(sdate), as.Date(edate))
-
-# cleaning work space
-#rm(chl, chla, chlb, idx, sdate, edate)
-```
-
-Create table
-```{r}
-# this is much simpler code but may take alot of memory
-# xyz = tableit(c(s, f, c, cb, ca))
-# colnames(xyz) = c("lon", "lat", "time", "sla", "fsle", "chl", "chlb", "chla")
-# 
-# xyz$fsle = xyz$fsle * -1
-# #xyz = subset(xyz, !fsle == 0)
-# 
-# xyz$time = as.character(xyz$time)
-# xyz$time = as.numeric(xyz$time)
-# xyz$time = as.Date(xyz$time)
-# 
-# xyz = xyz[!is.na(xyz$sla),]
-# xyz = xyz[!is.na(xyz$fsle),]
-# 
-# gc()
-```
-
-Kcluster by day
-```{r, message = FALSE}
-# kcluster = function(x){
-#   x$fsle = scale01(x$fsle)
-#   x$sla  = scale01(x$sla)
-#   
-#   us = median(x$sla, na.rm = TRUE)
-#   uf = median(x$fsle, na.rm = TRUE)
-#   ms = mad(x$sla, na.rm = TRUE)
-#   mf = mad(x$fsle, na.rm = TRUE)
-#   
-#   cents = rbind(c(us,      uf),
-#                 c(us - ms, uf),
-#                 c(us + ms, uf),
-#                 c(us, uf + mf))
-#   set.seed(225)
-#   ktbl = kmeans(x[ ,c("sla", "fsle")], 
-#                  centers   = cents,
-#                  iter.max  = 50,
-#                  nstart    = 100, 
-#                  algorithm = "Lloyd")
-#   data.frame(ktbl$cluster)[,1]
-# }
-# 
-# d = as.factor(xyz$time)
-# k = lapply(split(xyz, d), FUN = kcluster)
-# k = unlist(k)
-# xyz$k = as.numeric(k)
-# df  = xyz[!is.na(xyz$chl),]
-# df$k = as.factor(df$k)
-# gc()
 ```
 
 Calculate patch area
