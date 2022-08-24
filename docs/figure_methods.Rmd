@@ -7,6 +7,11 @@ output: pdf_document
 
 # Pre-Processing ---------------------------------------------------------------
 
+## Data Downbload: 
+
+Argo-float data provided by Ifremer was accessed via the Erddap tableddap server
+(data-set id: ArgoFloats-synthetic-BGC) using the erddap packacge in R. 
+ 
 ## General Processing
 
 The CZZ boarders where used as a mask to remove the coastal effects in the CHL 
@@ -156,7 +161,12 @@ Black and grey lines (95% confidence interval) are a GAM smoother. Figure a)
 shows the surface, figure b) shows the biomass, and figure c) shows the depth 
 integrated CHL concentration.
 
-**Methods:** 
+**Methods:** Daily surface area, integrated chlorophyll biomass, and chlorophyll 
+concentration where calculated using the methods outlined in Lehan et al. 2006. 
+Chlorophyll biomass was integrated spatially and verticaly across daily estimates 
+of the mixed layer depth (MLD). The MLD was calculated using the method derived 
+by Chu and Fan 2010. The chlorophyll concentration was found as the mean 
+chlorophyll signal over the daily surface area of the bloom patch. 
 
 **Discussion:** 
 
