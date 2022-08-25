@@ -9,7 +9,7 @@ output: pdf_document
 
 ## Data Downbload: 
 
-## General Processing
+## General Processing ----------------------------------------------------------
 
 ## Figure 4: HPLC against Satellite CHL Comparison and CHL Climatologies
 
@@ -77,7 +77,7 @@ integrated CHL concentration.
 
 ## Figure 9: (Sub)mesoscale features across the lifespan of the 2018 bloom
 
-Timeseries of bloom percent association (deviation from the background) of bloom 
+Time-series of bloom percent association (deviation from the background) of bloom 
 values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent 
 association is the percent of each (sub)mesoscale region’s area that is 
 associated with a bloom feature.
