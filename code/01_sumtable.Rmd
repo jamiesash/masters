@@ -16,8 +16,9 @@ output:
 ---  
 
 ```{r setup, include=FALSE, message = FALSE}
-source("../R/libraries.R")
-source("../R/functions.R")
+source("libraries.R")
+source("functions.R")
+source("blooms.R")
 rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -92,9 +93,9 @@ vectorize  <- function(x) {
   # x = raster::flip(x, direction = "x")
   # x = raster::flip(x, direction = "y")
   # 
-  e = extent(x)
-  x = t(x)
-  extent(x) = e
+  # e = extent(x)
+  # x = t(x)
+  # extent(x) = e
   # 
   x     <- rasterToPoints(x)
   x     <- data.frame(x)
@@ -102,6 +103,23 @@ vectorize  <- function(x) {
   x     <- reshape2::melt(x, id.vars = c("lat", "lon"))
   colnames(x) <- c("lats", "lons", "time", "val")
   x
+}
+
+fronts = function(ras,
+                  downsize = 10,
+                  I = 2){
+  # ras  = raster::flip(ras, direction = "x")
+  thresh = median(ras, na.rm = TRUE) + mad(ras, na.rm = TRUE)*I
+  idx  = which(values(ras) > thresh)
+  e    = extent(ras)
+  s    = dim(ras)
+  lons = seq(from = e[1], to = e[2], length = s[1]) 
+  lats = seq(from = e[3], to = e[4], length = s[2]) 
+  grid = pracma::meshgrid(lons, lats)
+  fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = ras[idx])
+  idx = seq(1, nrow(fronts), downsize)
+  fronts = fronts[idx, ]
+  fronts
 }
 
 bcent <- function(ras){
@@ -118,20 +136,20 @@ bcent <- function(ras){
   temp[idx,]
 }
 
-bcent <- function(ras){
-  # create a raster of bloom 0, 1's as b
-  pix  <- cellStats(ras, stat = mean, na.rm = TRUE)
-  idx  <- as.numeric(which(pix == max(pix, na.rm = TRUE)))
-  # temp = raster::mask(subset(ras, ind), subset(b, ind))
-  # chla layer with largest bloom area
-  temp = subset(ras, idx)
-  
-  temp = fronts(temp)
-  #temp$value = scale01(temp$value)
-  y = mean(temp$lats, na.rm = TRUE)
-  x = mean(temp$lons, na.rm = TRUE)
-  data.frame(lons = x, lats = y)
-  }
+# bcent <- function(ras){
+#   # create a raster of bloom 0, 1's as b
+#   pix  <- cellStats(ras, stat = mean, na.rm = TRUE)
+#   idx  <- as.numeric(which(pix == max(pix, na.rm = TRUE)))
+#   # temp = raster::mask(subset(ras, ind), subset(b, ind))
+#   # chla layer with largest bloom area
+#   temp = subset(ras, idx)
+# 
+#   temp = fronts(temp, I = 3)
+#   #temp$value = scale01(temp$value)
+#   y = mean(temp$lats, na.rm = TRUE)
+#   x = mean(temp$lons, na.rm = TRUE)
+#   data.frame(lons = x, lats = y)
+#   }
 #   idx = which(temp$value == max(temp$value, na.rm = TRUE))
 #   idx = max(idx)
 #   temp[idx,]
@@ -223,7 +241,7 @@ filt_stl = function(ras = chl, res = 8, sub.start = 2){
   data.frame(raw = raw, anom = anom, clim = clim, seas = seas, seas_clim =  seas + clim)
 }
 
-bloomspan = function(anom, time = getZ(chl), gaps = 1, dur = 1){
+bloomspan = function(anom, time = getZ(chl), gaps = 0, dur = 1){
   # apply loess to 
   
   u   = median(anom, na.rm = TRUE)
@@ -249,9 +267,24 @@ bloomspan = function(anom, time = getZ(chl), gaps = 1, dur = 1){
   dablooms
   }
 
-sumstats = function(blooms = chlb, signal = chl, tbl){
+sumstats = function(blooms = chlb, signal = chl, sdate, edate){
   
-  idx = tbl[,c("start", "end")]
+  ts = as.Date(sdate)
+  te = as.Date(edate)
+  tc = getZ(signal)
+  
+  nearest = function(x, y) which.min(abs(y - x))
+  
+  start = list()
+  end   = list()
+  for(i in 1:length(ts)) start[[i]] = as.Date(ts[i])
+  for(i in 1:length(te)) end[[i]] = as.Date(te[i])
+  
+  start = lapply(X = start, FUN = nearest, y = tc)
+  end   = lapply(X = end, FUN = nearest, y = tc) 
+  
+  idx = data.frame(start = unlist(start), end = unlist(end))
+  #idx = tbl[,c("start", "end")]
   
   cb = apply(idx, MARGIN = 1, FUN = idxbloom, ras = blooms)
   
@@ -269,16 +302,18 @@ sumstats = function(blooms = chlb, signal = chl, tbl){
   m     = lapply(mags,  FUN = mymax, par = "mag")
   a     = lapply(areas, FUN = mymax, par = "area")
   
-  sumtbl = data.frame(sdate    = tbl$sdate,
-                      edate    = tbl$edate,
-                      duration = tbl$duration,
+  duration = as.Date(edate) - as.Date(sdate)
+  
+  sumtbl = data.frame(sdate    = as.Date(sdate),
+                      edate    = as.Date(edate),
+                      duration = duration,
                       mag      = round(unlist(m), 2), 
                       area     = round(unlist(a), 2),
-                      lon      = cents[,1],
-                      lat      = cents[,2])
+                      lat      = cents[,1],
+                      lon      = cents[,2])
   
-  idx = sumtbl$duration > 16
-  sumtbl = sumtbl[idx, ]
+  # idx = sumtbl$duration > 16
+  # sumtbl = sumtbl[idx, ]
   sumtbl
 }
 
@@ -314,17 +349,33 @@ Data download
 # edate <- as.Date("2018-11-15")
 #sdate = as.Date("1998-01-01")
 #edate = as.Date("2021-01-01")
+
+blooms = blooms[2:nrow(blooms),]
+
 lons = c(-165, -130)
 lats = c( 22,   35)
  
 # I had 2003-12-01 for the old sum table
-sdate = as.Date("2003-01-01")
+sdate = as.Date("2003-01-02")
 edate = as.Date("2021-12-01")
+chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chla8day",
+              lat = lats,
+              lon = lons,
+              sdate = sdate,
+              edate = edate,
+              large = FALSE)
+
+gc()
+
 # Using cloud free reproceed data long term data set
-# https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-chl-multi_cci-l3-chl_4km_daily-rep-v02?
+# "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-chl-multi_cci-l3-chl_4km_daily-rep-v02?"
 # "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_interpolated_4km_daily-rep?"
+
 # Monthly
 # url = "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_4km_monthly-rep?"
+# url = "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_interpolated_4km_daily-rep?"
+
 # chl = loadsat(var = "CHL",
 #               sdate = sdate,
 #               edate = edate,
@@ -337,24 +388,24 @@ edate = as.Date("2021-12-01")
 #               url = "https://jash:5.Pellegrino@my.cmems-du.eu/thredds/dodsC/dataset-oc-glo-bio-multi-l4-chl_interpolated_4km_daily-rep?")
 
 #url = "/thredds/dodsC/cmems_obs-oc_glo_bgc-plankton_my_l4-multi-4km_P1M"
+```
 
-# I need to make sure I'm not saving a fuck tone of files
-# I'm uploading the large data set for the anomaly calculation
-chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
-              id  = "erdMH1chla1day",
-              lat = lats,
-              lon = lons,
-              sdate = sdate,
-              edate = edate,
-              large = TRUE)
-gc()
+correct oreantation
+```{r}
+chl = oreant(chl, t1 = TRUE)
+```
+
+check oreantation
+```{r}
+cmap = calc(chl, fun = mean, na.rm = TRUE)
+plot(cmap)
 ```
 
 Remove South of Hawaii and Chlorophyll front  
 ```{r, eval = TRUE, message = FALSE, warning = FALSE}
 chl = bufcoast(chl, 
                region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
 # free unused R memory
 gc()
 ```
@@ -370,26 +421,30 @@ gc()
 
 STL Filter: calculate anomaly, seasonality and climatology 
 ```{r, message = FALSE, warning = FALSE}
-ts   = filt_stl(ras = chl, res = 1, sub.start = 8)
-gc()
+# ts   = filt_stl(ras = chl, res = 1, sub.start = 8)
+# gc()
 ```
 
 Fill small blips and identify large blooms. Determine start, end, and duration of blooms
 ```{r, message = FALSE, warning = FALSE}
-durations = bloomspan(ts$anom, time = getZ(chl), gaps = 7, dur = 5)
-gc()
+# durations = bloomspan(anom = ts$anom, time = getZ(chl), gaps = 1, dur = 1)
+# gc()
 ```
 
 Apply functions and catinate summary table
 ```{r, message = FALSE, warning = FALSE}
 # Create a list of objects subset by bloom time span to calc stats on
-tbl = sumstats(blooms = chl_b, signal = chl, tbl = durations)
+# tbl = sumstats(blooms = chl_b, signal = chl, tbl = durations)
+
+# I need to find the start and end index of each bloom
+
+tbl = sumstats(blooms = chl_b, signal = chl, sdate = blooms$sdate, edate = blooms$edate)
 gc()
 ```
 
 saving tables as csv
 ```{r, eval = FALSE, message = FALSE, warning = FALSE,}
-write.csv(tbl, file = "../data/outfiles/full_sum_2.csv")
+write.csv(tbl, file = "../data/full_sum_20220826.csv")
 gc()
 ```
 
@@ -409,8 +464,8 @@ kbl(tbl,
   kable_styling(full_width = F, latex_options = "HOLD_position") %>%
   column_spec(1:2, bold = F, color = "black") %>%
   column_spec(1:7, width = "10em")
-  #row_spec(c(4, 5, 8, 11, 12, 17), bold = F, color = "black", background = "#add8e6")
-  #add_header_above(c("Table of (sub)mesoscale contributions: St. ALOHA" = 5), bold=T)
+  # row_spec(c(4, 5, 8, 11, 12, 17), bold = F, color = "black", background = "#add8e6")
+  # add_header_above(c("Table of (sub)mesoscale contributions: St. ALOHA" = 5), bold=T)
 ```
 
 ## Clim maps {.tabset}
@@ -419,14 +474,14 @@ kbl(tbl,
 ```{r, message = FALSE, fig.show = "hold", out.width = "95%",  warning = FALSE}
 csum <- subsum(chl)
 cmap <- calc(csum, fun = mean, na.rm = TRUE)
-map(cmap, main = "Raw CHL")
+plot(cmap)
 ```
 
 ### CHL anomaly signal
 ```{r, message = FALSE, fig.show = "hold", out.width = "95%",  warning = FALSE}
 csum <- subsum(chl_a)
 cmap <- calc(csum, fun = mean, na.rm = TRUE)
-map(cmap, main = "CHL anomaly")
+plot(cmap, main = "CHL anomaly")
 ```
 
 ### Only blooms
@@ -543,11 +598,11 @@ title(xlab = xlab, cex.lab = 1.5, line = 2.5)
 
 ### Bloom Duration
 ```{r, message = FALSE, fig.width = 8, fig.show = "hold", out.width = "75%",  warning = FALSE}
-
+# 
 start = yday(tbl$sdate)
 end   = yday(tbl$edate)
-end[end < 100] = 365
-end[length(end)] = end[length(end)] + 60
+# end[end < 100] = 365
+# end[length(end)] = end[length(end)] + 60
 
 durations = data.frame(id = as.character(year(tbl$sdate)), start, end)
 durations$middle = apply(durations[, c("start", "end")], 1, FUN = mean, na.rm = TRUE)
@@ -618,7 +673,7 @@ ggplot(durations) +
 
 ### Bloom Center's
 ```{r, message = FALSE, fig.width = 10, fig.height = 7.5, fig.show = "hold", out.width = "95%",  warning = FALSE}
-e = extent(-165, -132, 18, 38)
+e = extent(-171, -127, 18, 40)
 wdmap <- getMap(resolution = "high")
 a = tbl$area
 # radius in km
@@ -635,7 +690,10 @@ jamie_theme(e[1:2], e[3:4],
             main = "", 
             ylab = "Latitude", 
             xlab = "Longitude",
-            dt = FALSE
+            dt = FALSE,
+            xaxes = TRUE,
+            yaxes = TRUE,
+            mar = c(5,5,5,3)
             #asp = 1.08
             )
 points(tbl$lon, tbl$lat, pch = 19)
