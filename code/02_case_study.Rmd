@@ -435,6 +435,7 @@ chla = anomalize(chl, detrend = FALSE)
 chlb = bool(chla)
 gc()
 ```
+
 Subset time-span of interest: 2018 summer bloom
 ```{r, message = FALSE, warning = FALSE, cache = FALSE}
 # I could also just load using errdap. This is faster tho
