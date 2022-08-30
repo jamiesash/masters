@@ -2062,13 +2062,14 @@ loadsat <- function(var = "sla",
 # ------------------------------------------------------------------------------
 bufcoast = function(ras, 
                     region = "Hawaiian Islands", 
-                    path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP"){
+                    path = "../data/USMaritimeLimitsAndBoundariesSHP"){
   path.eez.usa = (path)
   fnam.eez.usa = "USMaritimeLimitsNBoundaries.shp"
   eez.usa = readOGR(dsn = path.eez.usa, layer = file_path_sans_ext(fnam.eez.usa))
   idx = eez.usa$REGION == "Hawaiian Islands"
   hawaii = eez.usa[idx,]
-  idx = hawaii$CZ == 1
+  #idx = hawaii$CZ == 1
+  idx = hawaii$TS == 1
   hawaii = hawaii[idx,]
   hawaii = st_as_sf(hawaii)
   hawaii = st_polygonize(hawaii)

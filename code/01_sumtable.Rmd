@@ -130,6 +130,9 @@ bcent <- function(ras){
   # chla layer with largest bloom area
   temp = subset(ras, idx)
   
+  #temp = oreant(temp, t1 = TRUE)
+  
+  
   temp = vectorize(temp)
   idx = which(temp$val == max(temp$val, na.rm = TRUE))
   idx = max(idx)
@@ -267,11 +270,12 @@ bloomspan = function(anom, time = getZ(chl), gaps = 0, dur = 1){
   dablooms
   }
 
-sumstats = function(blooms = chlb, signal = chl, sdate, edate){
+sumstats = function(blooms = chlb, signal1 = chl, signal2 = chla, sdate, edate){
   
   ts = as.Date(sdate)
   te = as.Date(edate)
-  tc = getZ(signal)
+  tc = getZ(signal1)
+  ta = getZ(signal2)
   
   nearest = function(x, y) which.min(abs(y - x))
   
@@ -291,10 +295,13 @@ sumstats = function(blooms = chlb, signal = chl, sdate, edate){
   # instead of calculating a 0/1 I can vectorize the blooms and turn them into 
   # long-format tables
   
-  co = apply(idx, MARGIN = 1, FUN = idxbloom, ras = signal)
+  co = apply(idx, MARGIN = 1, FUN = idxbloom, ras = signal1)
+  
+  ca = apply(idx, MARGIN = 1, FUN = idxbloom, ras = signal2)
   
   # then apply max function to list of time series to get value
-  cents = mapply(bcent, ras = co, SIMPLIFY = FALSE)
+  #cents = mapply(bcent, ras = co, SIMPLIFY = FALSE)
+  cents = mapply(bcent, ras = ca, SIMPLIFY = FALSE)
   cents = do.call(rbind, cents)
   
   mags  = mapply(bmag, x = co, b = cb, SIMPLIFY = FALSE)
@@ -345,15 +352,10 @@ nff = function(x = NULL, n = NULL, up = 1L){
 
 Data download
 ```{r, message = FALSE, warning = FALSE}
-# sdate <- as.Date("2018-07-01")
-# edate <- as.Date("2018-11-15")
-#sdate = as.Date("1998-01-01")
-#edate = as.Date("2021-01-01")
-
 blooms = blooms[2:nrow(blooms),]
 
-lons = c(-165, -130)
-lats = c( 22,   35)
+lons = c(-170, -130)
+lats = c( 20,   35)
  
 # I had 2003-12-01 for the old sum table
 sdate = as.Date("2003-01-02")
@@ -406,7 +408,6 @@ Remove South of Hawaii and Chlorophyll front
 chl = bufcoast(chl, 
                region = "Hawaiian Islands", 
                path = "../data/USMaritimeLimitsAndBoundariesSHP")
-# free unused R memory
 gc()
 ```
 
@@ -437,14 +438,13 @@ Apply functions and catinate summary table
 # tbl = sumstats(blooms = chl_b, signal = chl, tbl = durations)
 
 # I need to find the start and end index of each bloom
-
-tbl = sumstats(blooms = chl_b, signal = chl, sdate = blooms$sdate, edate = blooms$edate)
+sumtbl = sumstats(blooms = chl_b, signal1 = chl, signal2 = chl, sdate = blooms$sdate, edate = blooms$edate)
 gc()
 ```
 
 saving tables as csv
 ```{r, eval = FALSE, message = FALSE, warning = FALSE,}
-write.csv(tbl, file = "../data/full_sum_20220826.csv")
+write.csv(sumtbl, file = "../data/full_sum_20220829.csv")
 gc()
 ```
 
@@ -454,6 +454,7 @@ gc()
 
 ### summary table
 ```{r, message = FALSE, fig.show = "hold", out.width = "95%",  warning = FALSE}
+tbl = sumtbl
 rownames(tbl) = NULL
 idx = !year(tbl$sdate) == 2008
 tbl = tbl[idx,]
@@ -482,39 +483,6 @@ plot(cmap)
 csum <- subsum(chl_a)
 cmap <- calc(csum, fun = mean, na.rm = TRUE)
 plot(cmap, main = "CHL anomaly")
-```
-
-### Only blooms
-```{r, message = FALSE, fig.show = "hold", out.width = "95%",  warning = FALSE}
-cv = fronts(cmap, downsize = 10)
-range01 = function(x){(x-min(x))/(max(x)-min(x))}
-cv$value = range01(cv$value)
-e = extent(-170, -130, 17, 36)
-
-jamie_theme(x = e[1:2], 
-            y = e[3:4],
-            main = "Blooms", 
-            dt = FALSE, 
-            ylim = range(cv$lats),
-            xlim = range(cv$lons))
-points(cv$lons, 
-       cv$lats, 
-       col = colvect(rep("#003300", length(cv$value)), alpha = cv$value),
-       pch = 15,
-       cex = 0.75)
-wdmap = getMap(resolution = "high")
-plot(wdmap, 
-     xlim = range(fronts$lon), 
-     ylim = range(fronts$lat), 
-     asp = 1, 
-     bg = "white", 
-     border = "black", 
-     col = "black", 
-     add = TRUE,
-     lwd = 2)
-box(which = "plot", 
-    lty = "solid", 
-    lwd = 3) 
 ```
 
 ## Visualize Summary Table {.tabset}
@@ -562,6 +530,10 @@ title(xlab = xlab, cex.lab = 1.5, line = 2.5)
 
 ### Big Bloom Areas
 ```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+tbl = sumtbl
+idx = tbl$area > 550000
+tbl = tbl[idx,]
+
 x = tbl$area/100000
 y = year(tbl$sdate)
 main = "30N bloom areas"
@@ -598,7 +570,10 @@ title(xlab = xlab, cex.lab = 1.5, line = 2.5)
 
 ### Bloom Duration
 ```{r, message = FALSE, fig.width = 8, fig.show = "hold", out.width = "75%",  warning = FALSE}
-# 
+tbl = sumtbl
+idx = tbl$area > 550000
+tbl = tbl[idx,]
+
 start = yday(tbl$sdate)
 end   = yday(tbl$edate)
 # end[end < 100] = 365
@@ -672,19 +647,27 @@ ggplot(durations) +
 ```
 
 ### Bloom Center's
-```{r, message = FALSE, fig.width = 10, fig.height = 7.5, fig.show = "hold", out.width = "95%",  warning = FALSE}
-e = extent(-171, -127, 18, 40)
+```{r, message = FALSE, fig.width = 10, fig.height = 6.8, fig.show = "hold", out.width = "95%",  warning = FALSE}
+
+tbl = sumtbl
+e = extent(-175, -127, 15, 40)
 wdmap <- getMap(resolution = "high")
-a = tbl$area
+temp = tbl
+idx = tbl$area > 550000
+tbl = tbl[idx,]
+idx = !year(tbl$sdate) == 2015
+tbl = tbl[idx,]
+
 # radius in km
+a = tbl$area
 r = sqrt(a/pi) 
 r = r/110.574 
 tbl$rad = r 
 tbl$y = as.character(year(tbl$sdate))
 
 idx = order(tbl$area, decreasing = TRUE)
-txt = tbl[idx,]
-txt = txt[1:2,]
+#txt = tbl[idx,]
+txt = txt[1:3,]
 
 jamie_theme(e[1:2], e[3:4],
             main = "", 
@@ -693,7 +676,7 @@ jamie_theme(e[1:2], e[3:4],
             dt = FALSE,
             xaxes = TRUE,
             yaxes = TRUE,
-            mar = c(5,5,5,3)
+            mar = c(5,5,2,3)
             #asp = 1.08
             )
 points(tbl$lon, tbl$lat, pch = 19)
