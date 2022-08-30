@@ -23,7 +23,7 @@ library(lubridate)
 
 ## Table 1: Summary table of late summer CHL blooms in the NPSG
 ```{r, echo=FALSE, out.width='65%', fig.show='hold', fig.cap = ""}
-tbl = read.csv("../data/full_sum_20220810.csv")
+tbl = read.csv("../data/full_sum_20220829.csv")
 idx = !year(tbl$sdate) == 2008
 tbl = tbl[idx,]
 tbl$duration[nrow(tbl)] = 92
@@ -77,7 +77,7 @@ knitr::include_graphics(c('../figures/thumbnail_20220713_latesummer.png'))
 ## Figure 2: Bloom centers and maximum area
 \captionsetup{justification=justified,margin=0.5cm}
 ```{r, echo=FALSE, fig.align='center', out.width = '100%', fig.show='hold', fig.cap = "Bloom centers for all summer to fall blooms that occur between 2003-2021. The area of each circle is equal to the maximum area each bloom reached, calculated from the 1-day L3 CHL product (erdMH1chla1day)."}
-knitr::include_graphics('..//figures/bloom_centers_20220810.png')
+knitr::include_graphics('../figures/bloom_centers_area_20220829.png')
 ```
 
 
@@ -87,7 +87,7 @@ knitr::include_graphics('..//figures/bloom_centers_20220810.png')
 \captionsetup{justification=justified,margin=0.5cm}
 ```{r, echo = FALSE, fig.align='center', out.width = '100%', fig.show='hold', fig.cap = "Bar plot of the bloom duration for all summer to fall blooms that occur between 2003-2021. Start and end date of each bloom (table 1) found using an STL filter. The length of each bar is equal to the duration described in table 1, as well as the start date of each bloom. The grey center line is the middle of each bloom, found as the mean of the bloom start and end date."}
 #knitr::include_graphics(c('..//figs/bloom_duration_2.png'))
-knitr::include_graphics(c('..//figures/bloom_durations_20220810.png'))
+knitr::include_graphics(c('..//figures/bloom_durations_20220829.png'))
 ```
 
 
