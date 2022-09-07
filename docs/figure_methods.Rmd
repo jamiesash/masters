@@ -13,6 +13,12 @@ output: pdf_document
 tableddap server (data-set id: ArgoFloats-synthetic-BGC) using the erddap 
 packacge in R. 
 
+Satellite chlorophyll data, provided by NOAA GEO, was accessed via the Erddap 
+server (data-set id: erdMH1chla8day) using the erddap packacge in R. NOAA offers
+a variety of sattelite CHL data sets For this study, the CHL data set used was 
+the Aqua-MODIS 8-day (data-set id: erdMH1chla8day), with a data range of 
+2003-01-06 to 2022-01-01.  
+
 ## General Processing
 
 The CZZ boarders where used as a mask to remove the coastal effects in the CHL 
