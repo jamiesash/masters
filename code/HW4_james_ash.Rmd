@@ -1,0 +1,183 @@
+---
+title: "Homework 4: Ven Diagrams"
+author: "Jamie Ash"
+date: "2022-09-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Question 1:** Is it always, sometimes, or never true that union distributes 
+over intersection:
+
+$$A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C)$$
+
+**Answer:** It is *always* true that union distributes over intersection
+
+Proving element $(A ∪ B) ∩ (A ∪ C) \subseteq (A \cup B) \cap (A \cup C)$
+
+If $x \in A \cup (B \cap C)$ then $x \in (A \cup B) \cap (A \cup C)$
+
+Suppose $x \in A \cup (B \cap C)$
+
+case 1: 
+  So $x \in A$ 
+  It follows that $x \in A \cup B$ and $x \in A \cup C$
+  therefore $x \in (A \cup B) \cap (A \cup C)$
+
+case 2: 
+  Let $x \in (B \cup C)$
+  So $x \in A$ and $x \in C$
+  then $x \in (C \cup A)$ and $x \in (B \cup A)$
+  for that matter $x \in (C \cup X)$ and $x \in (B \cup X)$ where $X$ is any set. 
+  therefore $x \in (A \cup B) \cap (A \cup C)$
+
+Proving element $(A \cup B) \cap (A \cup C) \subseteq (A ∪ B) ∩ (A ∪ C)$
+If $x \in (A \cup B) \cap (A \cup C)$ then $x \in A \cup (B \cap C)$
+
+Suppose $x \in (A \cup B) \cap (A \cup C)$
+Then $x \in A$ or $x \in B$ and $x \in A$ or $x \in C)$
+implies that $x \in A$ or $x \in B$ and $x \in C$
+therefore $x \in A \cup (B \cap C)$
+
+Plain Language:
+If a random element $x$ is in set  $A$ then $(A \cup B) \cap (A \cup C)$ is 
+true, and the only other case where this is true is when $x \in B$ and 
+$x \in C$. Therefore $x \in A \cup (B \cap C)$. 
+
+**Question 2:** Is it always, sometimes, or never true that intersection is 
+associative:  
+
+$$
+A \cap (B \cap C) = (A \cap B) \cap C
+$$
+**Answer:** It is always true that intersection is associative.
+
+**Proof:** To prove that that intersection is always associative and 
+$A \cap (B \cap C) = (A \cap B) \cap C$ I will show first that 
+$A \cap (B \cap C) \subseteq (A \cap B) \cap C$ and then that 
+$(A \cap B) \cap C \subseteq A \cap (B \cap C)$.
+ 
+If $x \in A \cap (B \cap C)$ then $x \in (A \cap B) \cap C$ 
+Suppose $x \in A \cap (B \cap C)$.
+So $x \in B$ and $x \in C$, and $x \in A$.
+Which implies that $x \in A$ and $x \in B$, and $x \in C$
+Therefore $(A \cap B) \cap C$
+
+If $x \in (A \cap B) \cap C$ then $x \in A \cap (B \cap C)$
+Let $x \in (A \cap B) \cap C$
+So $x \in A$ and $x \in B$ and $x \in C$
+implies that $x \in B$ and $x \in C$ and $x \in A$
+therefore $x \in A \cap (B \cap C)$
+
+**Question 3:** Is it always, sometimes, or never true that set difference 
+distributes over intersection:  
+
+$$
+A - (B \cap C) = (A - B) \cap (A - C)
+$$
+**Answer:** Is it sometimes true that set difference distributes over 
+intersection. 
+
+For the case of $A - (B \cap C) = (A - B) \cap (A - C)$ the set difference 
+distributes over intersections when $A = \langle a, c, d, f\rangle$ and 
+$B = \langle g, h, j, k \rangle$, and $C = \langle l, m, n, o \rangle$.
+
+for the left side of the equation $A - (B \cap C)$...
+$$
+A - (B \cap C) \\
+\langle a, c, d, f\rangle - (\langle g, h, j, k \rangle \cap \langle l, m, n, o \rangle) \\
+\langle a, c, d, f\rangle - \varnothing \\
+\langle a, c, d, f\rangle
+$$
+For the right side of the equation $(A - B) \cap (A - C)$...
+$$
+(A - B) \cap (A - C) \\
+(\langle a, c, d, f\rangle - \langle g, h, j, k \rangle) \cap (\langle a, c, d, f\rangle - \langle l, m, n, o \rangle)\\
+(\langle a, c, d, f\rangle) \cap \langle a, c, d, f\rangle\\
+\langle a, c, d, f\rangle
+$$
+
+But for the case of $A - (B \cap C) = (A - B) \cap (A - C)$ the set difference 
+does not distributes over intersections when $A = \langle a, c, d, f\rangle$ and 
+$B = \langle g, h, j, k \rangle$, and $C = \langle a, c, n, o \rangle$.
+
+for the left side of the equation $A - (B \cap C)$...
+$$
+A - (B \cap C) \\
+\langle a, c, d, f\rangle - (\langle g, h, j, k \rangle \cap \langle a, c, n, o \rangle) \\
+\langle a, c, d, f\rangle -  \varnothing \\
+\langle a, c, d, f\rangle 
+$$
+
+for the right side of the equation $(A - B) \cap (A - C)$...
+$$
+(A - B) \cap (A - C) \\
+(\langle a, c, d, f\rangle - \langle g, h, j, k \rangle) \cap (\langle a, c, d, f\rangle - \langle a, c, n, o \rangle) \\
+\langle a, c, d, f\rangle \cap \langle d, f\rangle \\
+\langle d, f\rangle
+$$
+Therefore $(A - B) - C$ is sometimes equal to A - (B - C).
+
+**Question 4:** Is it always, sometimes, or never true that set difference is 
+associative:  
+
+$$ 
+A - (B - C) = (A - B) - C
+$$ 
+
+**Answer:** Is it sometimes true that set difference is associative:  
+
+For the case of $A - (B - C) = (A - B) - C$ the set difference is associative 
+when $A = \langle a, c, d, f\rangle$ and $B = \langle g, h, j, k \rangle$, 
+and $C = \langle l, m, n, o \rangle$.
+
+First we find the left side of $A - (B - C) = (A - B) - C$
+$$
+A - (B - C) \\
+\langle a, c, d, f\rangle - (\langle g, h, j, k \rangle - \langle l, m, n, o \rangle) \\
+\langle a, c, d, f\rangle - \langle g, h, j, k \rangle \\
+\langle a, c, d, f\rangle \\
+A - (B - C) = \langle a, c, d, f\rangle
+$$
+First we find the right side of $A - (B - C) = (A - B) - C$
+$$
+(A - B) - C \\
+(\langle a, c, d, f\rangle - \langle g, h, j, k \rangle) - \langle l, m, n, o \rangle \\
+\langle a, c, d, f\rangle - \langle l, m, n, o \rangle \\
+\langle a, c, d, f\rangle \\
+(A - B) - C  = \langle a, c, d, f\rangle
+$$
+
+For this same case the set difference is not associative when 
+$A = \langle a, c, d, f\rangle$ and $B = \langle g, h, j, k \rangle$, and 
+$C = \langle a, c, n, o \rangle$.
+
+For the left side of the equation $A - (B - C)$...
+$$
+A - (B - C) \\
+\langle a, c, d, f \rangle - (\langle g, h, j, k \rangle - \langle a, c, n, o \rangle) \\
+\langle a, c, d, f \rangle - \langle g, h, j, k \rangle \\
+\langle a, c, d, f \rangle
+$$
+For the right side of the equation $(A - B) - C$...
+$$
+(A - B) - C \\
+(\langle a, c, d, f \rangle - \langle g, h, j, k \rangle) - \langle a, c, n, o \rangle \\
+\langle a, c, d, f \rangle - \langle a, c, n, o \rangle \\
+\langle d, f \rangle
+$$
+Therefore $(A - B) - C$ is sometimes equal to $A - (B - C)$.
+
+
+
+
+
+
+
+
+
+
+

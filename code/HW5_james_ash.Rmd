@@ -1,0 +1,209 @@
+---
+title: "HW5 MTH 321"
+author: "Jamie Ash"
+date: "2022-09-15"
+output: pdf_document
+---
+
+**Question 1:** If *a* and *b* are both odd, then *ab* is odd.  
+  *Hypothesis:* *a* and *b* are both odd  
+  *Conclusion:* *ab* is odd  
+  *Truth value:* True  
+  *Proof:* 
+  Suppose $a$ and $b$ are both odd.  
+  Then $a=2k+1$ and $b = 2l+1$ where $k,l \ in Z$.  
+  Likewise $ab=(2k+1)(2l+1) = 4kl + 2k+ 2l + 1$.  
+  Let $(4kl + 2L +2k) = 2(2kl + L +k) = 2h$ where $h \in Z$.  
+  So $ab = 2h + 1$.  
+  Therefore $ab$ is odd.  
+
+**Question 2:** If *a* is even or *b* is even then *ab* is even.  
+  *Hypothesis:* *a* is even or *b* is even  
+  *Conclusion:* *ab* is even  
+  *Truth value:* True  
+  *Proof:*  
+  Suppose $a$ is even or $b$ is even. We approach this proof by addressing the 
+  two relevant cases.   
+  **Case 1:** Without loss of generality, suppose $a$ is even and $b$ is even.  
+  It follows that $a = 2k$ and $b = 2l$ where $k, l \in Z$.  
+  Then $ab = 2k \times2l = 2(2kl) = 2h$ where $h \in Z$.  
+  Lastly $ab = 2h$ where $h \in Z$.  
+  Therefore $ab$ is even.  
+  
+  **Case 2:** Without loss of generality, suppose $a$ is even and $b$ is odd.  
+  It follows that $a = 2k$ and $b = 2l +1$ where $k, l \in Z$.  
+  Then $ab = 2k(2l + 1) = 2(2kl + k) = 2h$ where $h \in Z$.  
+  Simply $ab = 2h$ where $h \in Z$.  
+  Therefore $ab$ is even.  
+  
+  Therefore in all cases of $a$ is even or $b$ is even, then $ab$ is even.  
+
+**Question 3:** If $x \in Z$ is odd, then $x^2 - 1$ is divided by 4.   
+  *Hypothesis:* $x \in Z$ is odd   
+  *Conclusion:* $x^2 - 1$ is divided by 4  
+  *Truth value:* True  
+  *Counter example:*  I was not sure if this statement is true, so I tested it 
+  for a few values of $x \in Z$.  
+
+```{r, cache = FALSE}
+# creating integers 
+z = seq(from = -1000000000, to = 1000000000, by = 1)
+# if x is odd then...
+x = 2*z+1
+# creating x^2 - 1 
+c = x^2 - 1
+# c %% 4 returns a vector of the remainders of c / 4
+# unique(c %% 4) returns a vector of all the unique values in c %% 4
+unique(c %% 4)
+# The only unique remainder is 0, so all values in c are divisible by 4
+
+# cleaning the environment
+rm(z, x, c)
+```
+
+All of the remainders of $\frac{x^2 - 1}{4}$ are 0 when 
+[$x \in Z: -1000000000 \le x \le  1000000000$], therefore it's likely that 
+**Question 3** is a true statement.
+
+**Question 4:** If $a | b$ then $a^2 | b^2$.  
+  *Hypothesis:* $a | b$     
+  *Conclusion:* $a^2 | b^2$  
+  *Truth value:* True  
+  Suppose $a | b$   
+  Then $a/b = c$ where $c \in Z$.   
+  Furthermore $b^2/a^2$ = $a/b$ * $a/b$ = $c * c$ = $c^2$.    
+  If $c \in Z$, then $c^2 \in Z$.  
+  So $b^2/a^2 = k$ where $k \in Z$.    
+  Therefore $a^2 | b^2$.    
+
+**Question 5:** If $a | c$ and $b | c$ then $ab | c$.   
+  *Hypothesis:* $a | c$ and $b | c$   
+  *Conclusion:* $ab | c$  
+  *Truth value:* False  
+  *counter:*    
+  Ff $c$ is even and $|c| > 2$, and $b = c$ while $a = c/2$, then $ab > c$.   
+  Therefore, in general $ab$ does not divide $c$.  
+
+example:
+```{r}
+c = 4  
+b = 4  
+a = 2  
+
+# a|b
+b/a
+
+# b|c
+c/b
+
+# ab|c
+c / (a*b)
+```
+  
+**Question 6:** If $d | a$ and $d | b$ then $d | (a + b)$.   
+  *Hypothesis:* $b | a$ and $d | b$   
+  *Conclusion:* $d | (a + b)$  
+  *Truth value:* True 
+  *Proof:*
+  Suppose $d | a$ and $d | b$.   
+  So (a/d) = k where $k \in Z$.   
+  Similarly $(a/d) = n$ where $n \in Z$.    
+  Using $(a + b)/b = (a/d) + (b/d)$.   
+  Therefore $d | (a + b)$.  
+
+**Question 7:** If $a | r$ and $c | q$ then $ac | cq$.  
+  *Hypothesis:* $a | r$ and $c | q$   
+  *Conclusion:* $ac | cq$  
+  *Truth value:* True  
+  *Proof:*
+  Suppose $a | r$ and $c | q$.  
+  Then $r/a = k$ and $c/q = l$ where $k,l \in A$.  
+  So $\frac{r}{a} \times \frac{q}{c} = \frac{rq}{ac} = k \times l$ 
+    where $k,l \in Z$.  
+  Furthermore $k \times l = h$ where $h \in Z$.  
+  Lastly $\frac{rq}{ac} = h \in Z$.  
+  Therefore $ac | bd$  
+
+**Question 8:** If $n \in Z$ then $3n^2 + n + 114$ is even.  
+  *Hypothesis:* $n \in Z$   
+  *Conclusion:* $3n^2 + n + 114$ is even  
+  *Truth value:* False  
+  *Counter:*  
+  Suppose $n \in Z$.  
+  Case 1: $n$ is odd, then $3n^2 + n + 114$ is odd.  
+  Case 2: $n$ is even, then $3n^2 + n + 114$ is even.    
+  Therefore $3n^2 + n + 114$ is not generaly even when $n \in Z$.     
+
+**Question 9:** If $x,y \in R$ satisfy $x < y$, then $x^2 < y^2$.  
+  *Hypothesis:* $x,y \in R$ satisfy $x < y$  
+  *Conclusion:* $x^2 < y^2$  
+  *Truth value:* False  
+  *Counter:*
+
+When x is positive and y is negative, $x^2 < y^2$ is false.  
+Here are a few cases where $x^2$ and $y^2$ are equal...  
+```{r}
+x  = seq(from = -1, to = -1000, by = -1)
+y  = x * -1
+x2 = x^2 
+y2 = y^2
+# all are FALSE
+unique(x2 < y2)
+unique(x2 == y2)
+```
+
+**Question 10:** If $x \in (0, 4)$, then $\frac{4}{x(4-x)} \ge1$.  
+  *Hypothesis:* $x \in (0, 4)$  
+  *Conclusion:* $\frac{4}{x(4-x)} \ge1$  
+  *Truth value:* False?  
+  *Counter:*  
+  Does this mean x can be either 0 or 4? If x is 0, then the conclusion has a 0
+  in the denominator.   
+  
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

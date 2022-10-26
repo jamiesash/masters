@@ -1,0 +1,130 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Untitled},
+  pdfauthor={Jamie Ash},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Untitled}
+\author{Jamie Ash}
+\date{2022-09-08}
+
+\begin{document}
+\maketitle
+
+\textbf{Question 1:} Is it always, sometimes, or never true that union
+distributes over intersection:
+
+\[A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C)\]
+
+\textbf{Answer:} It is \emph{always} true that union distributes over
+intersection
+
+Proving element
+\((A ∪ B) ∩ (A ∪ C) \subseteq (A \cup B) \cap (A \cup C)\)
+
+If \(x \in A \cup (B \cap C)\) then \(x \in (A \cup B) \cap (A \cup C)\)
+
+Suppose \(x \in A \cup (B \cap C)\)
+
+case 1: So \(x \in A\) It follows that \(x \in A \cup B\) and
+\(x \in A \cup C\) therefore \(x \in (A \cup B) \cap (A \cup C)\)
+
+case 2: Let \(x \in (B \cup C)\) So \(x \in A\) and \(x \in C\) then
+\(x \in (C \cup A)\) and \(x \in (B \cup A)\) for that matter
+\(x \in (C \cup X)\) and \(x \in (B \cup X)\) where \(X\) is any set.
+therefore \(x \in (A \cup B) \cap (A \cup C)\)
+
+Proving element
+\((A \cup B) \cap (A \cup C) \subseteq (A ∪ B) ∩ (A ∪ C)\) If
+\(x \in (A \cup B) \cap (A \cup C)\) then \(x \in A \cup (B \cap C)\)
+
+Suppose \(x \in (A \cup B) \cap (A \cup C)\) Then \(x \in A\) or
+\(x \in B\) and \(x \in A\) or \(x \in C)\) implies that \(x \in A\) or
+\(x \in B\) and \(x \in C\) therefore \(x \in A \cup (B \cap C)\)
+
+Plain Language: If a random element \(x\) is in set \(A\) then
+\((A \cup B) \cap (A \cup C)\) is true, and the only other case where
+this is true is when \(x \in B\) and \(x \in C\). Therefore
+\(x \in A \cup (B \cap C)\).
+
+\textbf{Question 2:} Is it always, sometimes, or never true that
+intersection is associative:
+
+\[
+A \cap (B \cap C) = (A \cap B) \cap C
+\]
+
+\textbf{Question 3:} Is it always, sometimes, or never true that set
+difference distributes over intersection:
+
+\[
+A - (B \cap C) = (A - B) \cap (A - C)
+\]
+
+\textbf{Question 4:} Is it always, sometimes, or never true that set
+difference is associative:
+
+\[ 
+A - (B - C) = (A - B) - C
+\]
+
+\end{document}
