@@ -1327,9 +1327,10 @@ shadedline = function(x, y1, y2, y0 = NULL,
 # load_edds --------------------------------------------------------------------
 
 load_edds = function(
-  path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\eddies\\",
-  file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118",
-  index = as.Date("2018-10-02"),
+  path = "..\\data\\eddies\\",
+  file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
+  sdate = as.Date("2018-10-02"),
+  edate = as.Date("2018-10-02") + 10,
   domain = extent(-158, -130, 23, 35)){
   
   nc_data <- nc_open(paste(path, file, sep = ""))
@@ -1341,24 +1342,33 @@ load_edds = function(
   time <- as.Date(time, origin = as.Date("1950-01-01"))
   
   # subset by time
-  bloomday <- index
-  ind      <- which(time == bloomday)
-  
-  # combine into long format data frame 
-  lat <- slat[, ind]
-  lon <- slon[, ind]
-  id  <- sort(rep(1:dim(lat)[2], dim(lat)[1]))
-  lat <- c(lat)
-  lon <- c(lon)
-  lon <- lon - 360
-  cy  <- rep(-1, length(lat))
-  edds <- data.frame(lat, lon, id, cy)
-  
-  #subset by domain
-  domain <- extent(domain)
-  edds <- subset(edds, lon > domain[1] & lon < domain[2])
-  edds <- subset(edds, lat > domain[3] & lat < domain[4])
-}
+  #ind  <- which((time >= sdate) & (time <= edate))
+  eddies = list()
+  j = 0
+  for(i in seq(sdate, edate, by = 1)) {
+    j = j + 1
+    ind = which(time == i)
+    
+    # combine into long format data frame 
+    #t   = time[ind]
+    lat = slat[, ind]
+    lon = slon[, ind]
+    id  = sort(rep(1:dim(lat)[2], dim(lat)[1]))
+    lat = c(lat)
+    lon = c(lon)
+    lon = lon - 360
+    cy  = rep(-1, length(lat))
+    
+    edds <- data.frame(time = as.Date(rep(i, length(lat))), lat, lon, id, cy)
+    
+    #subset by domain
+    domain <- extent(domain)
+    edds <- subset(edds, lon > domain[1] & lon < domain[2])
+    edds <- subset(edds, lat > domain[3] & lat < domain[4])
+    eddies[[j]] = edds 
+    }
+  do.call(rbind, eddies)
+  }
 
 # boxit ------------------------------------------------------------------------
 boxit <- function(x1, x2, y, data,
@@ -1489,7 +1499,7 @@ plotit <- function(x, y,
         line = 2.5)
 }
 
-# loadsat ----------------------------------------------------------------------
+# loadchl ----------------------------------------------------------------------
 # load data from an erddap server
 loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
                     id = "erdMH1chla8day",
@@ -1507,15 +1517,15 @@ loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
   
   down_chl <- function(x,
                        data_info = data_info,
-                       longitude = lon, 
-                       latitude  = lat, 
-                       fields    = parameter, 
+                       longitude = lon,
+                       latitude  = lat,
+                       fields    = parameter,
                        url       = url_base){
-    griddap(data_info, 
-            longitude = lon, 
-            latitude  = lat, 
-            time   = x, 
-            fields = parameter, 
+    griddap(data_info,
+            longitude = lon,
+            latitude  = lat,
+            time   = x,
+            fields = parameter,
             url    = url_base)
   }
   
@@ -1554,8 +1564,7 @@ loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
     ras <- subset(ras, which(idx))
     ras <- setZ(ras, z = time[idx], name = "time")
     extent(ras) <- extent(min(lon[[1]]), max(lon[[1]]), min(lat[[1]]), max(lat[[1]]))
-  } 
-  else {
+  } else {
     t <- paste(as.character(c(sdate, edate)), 
                c("T00:00:00Z", "T00:00:00Z"), 
                sep = "")
@@ -1584,6 +1593,116 @@ loadchl <- function(url   = "https://upwell.pfeg.noaa.gov/erddap",
     ras <- setZ(ras, z = time, name = "time")
     extent(ras) <- extent(min(lons), max(lons), min(lats), max(lats))
     }
+  crs(ras) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+  #print("remember to clear cache Users james AppData Local cache R rerddap")
+  ras
+}
+
+# loadsat ----------------------------------------------------------------------
+# load data from an erddap server
+loadsat = function(url   = "https://upwell.pfeg.noaa.gov/erddap",
+                    id = "erdMH1chla8day",
+                    parameter = c("chlorophyll", "time", "latitude", "longitude"),
+                    sdate = as.Date("2018-05-01"),
+                    edate = as.Date("2022-04-11"),
+                    lat   = c(20, 35),
+                    lon   = c(-170, -135),
+                    large = FALSE,
+                    by    = 365){
+  # where all the large cache files go
+  # C:\Users\james\AppData\Local\cache\R\rerddap
+  # C:/Users/james/AppData/Local/Temp/RtmpUzoLlB/raster
+  data_info = rerddap::info(id, url = url)
+  down_chl = function(window,
+                       data_info = data_info,
+                       longitude = lon, 
+                       latitude  = lat, 
+                       fields    = parameter, 
+                       url       = url_base){
+    griddap(x = data_info, 
+            longitude = lon, 
+            latitude  = lat, 
+            time   = window, 
+            fields = parameter, 
+            url    = url_base)
+  }
+  
+  if(large == TRUE){
+    # create a list of one year sequences 
+    y <- year(sdate):year(edate)
+    starts <- seq(from = sdate, to = edate, by = by)
+    starts[length(starts)+1] <- edate 
+    starts <- paste(as.character(starts), 
+                    "T00:00:00Z", 
+                    sep = "")
+    
+    times <- list()
+    for(i in 2:length(starts)) times[[i-1]] <- c(starts[i-1], starts[i])
+    
+    blocks = list()
+    for(i in 1:length(times)){
+      blocks[[i]] = down_chl(window = times[[i]],
+                             data_info = data_info,
+                             longitude = lon, 
+                             latitude  = lat, 
+                             fields    = parameter, 
+                             url       = url_base)
+    }
+    
+    # Windows can paralleling this but could do it with a for loop
+    #data <- lapply(times, down_chl)
+    
+    blocks <- lapply(blocks, function(x) nc_open(x$summary$filename))
+    ras  <- lapply(blocks, ncvar_get)
+    lat  <- lapply(blocks, ncvar_get, varid = "latitude")
+    lon  <- lapply(blocks, ncvar_get, varid = "longitude")
+    time <- lapply(blocks, ncvar_get, varid = "time")
+    #chl <- lapply(data, ncvar_get, varid = "chlorophyll")
+    lapply(blocks, nc_close)
+    rm(blocks)
+    time <- lapply(time, function(x) as.Date(as.POSIXct(x, origin = "1970-01-01")))
+    
+    ras <- lapply(ras, 
+                  function(x) {
+                    if(is.na(dim(x)[3])) dim(x) <- c(dim(x)[1], dim(x)[2], 1)
+                    brick(x)
+                  })
+    
+    time <- as.Date(unlist(time))
+    idx <- !duplicated(time)
+    ras <- brick(ras)
+    ras <- subset(ras, which(idx))
+    ras <- setZ(ras, z = time[idx], name = "time")
+    extent(ras) <- extent(min(lon[[1]]), max(lon[[1]]), min(lat[[1]]), max(lat[[1]]))
+  } else {
+    window <- paste(as.character(c(sdate, edate)), 
+               c("T00:00:00Z", "T00:00:00Z"), 
+               sep = "")
+    
+    data_info <- rerddap::info(id, url = url)
+    data <- griddap(data_info, 
+                    longitude = lon, 
+                    latitude = lat, 
+                    time = window, 
+                    fields = parameter, 
+                    url = url_base
+    )
+    
+    data <- nc_open(data$summary$filename)
+    ras  <- ncvar_get(data)
+    lats <- ncvar_get(data, varid = "latitude")
+    lons <- ncvar_get(data, varid = "longitude")
+    time <- ncvar_get(data, varid = "time")
+    attr <- ncatt_get(data, varid = 0)
+    nc_close(data)
+    rm(data)
+    
+    time <- as.Date(as.POSIXct(time, origin = "1970-01-01"))
+    
+    ras <- brick(ras) 
+    ras <- setZ(ras, z = time, name = "time")
+    extent(ras) <- extent(min(lons), max(lons), min(lats), max(lats))
+  }
   crs(ras) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
   #print("remember to clear cache Users james AppData Local cache R rerddap")
   ras
@@ -1966,98 +2085,98 @@ polymask <- function(ras,
 
 
 # ------------------------------------------------------------------------------
-
-loadsat <- function(var = "sla",
-                    url,
-                    sdate = as.Date("2018-05-01"), 
-                    edate = as.Date("2018-11-01"), 
-                    lons = c(190-360, 230-360), 
-                    lats = c(25, 32),
-                    org = "1900-01-01",
-                    lat_varid = "lat",
-                    lon_varid = "lon",
-                    by = 365
-                    ){
-  
-  data = nc_open(url, verbose = FALSE, write = FALSE)
-  lat  = ncvar_get(data, varid = lat_varid)
-  lon  = ncvar_get(data, varid = lon_varid)
-  time = ncvar_get(data, varid = "time")
-  # time is in a crazy format. Maybe seperat loadchl function? Geting harry
-  # seconds since 1970-01-01 00:00:00
-  
-  if(var == "CHL") {
-    #time = as.POSIXct(time, origin = origin)
-    time = as.Date(time, origin = org)
-    #time = anydate(time)
-  }
-  
-  #else time <- as.Date(time)
-  # create a list of one year sequences 
-  y <- year(sdate):year(edate)
-  starts <- seq(from = sdate, to = edate, by = by)
-  starts[length(starts)+1] <- edate #
-  times <- list()
-  for(i in 2:length(starts)) times[[i-1]] <- c(starts[i-1], starts[i])
-  times = lapply(times, function(x) data.frame(sdate = x[[1]], edate = x[[2]]))
-  
-  # writing this function to apply it to each one year date span for download
-  down_sat = function(x, data, lat, lon, time){
-    sdate = x$sdate
-    edate = x$edate
-    
-    #lon[lon < 0] = lon[lon < 0] + 360
-    #lons[lons < 0] = lons[lons < 0] + 360
-    
-    # I need to convert lons to 0-360 for both
-    idx_lat <- which(lat > lats[1] & lat < lats[2])
-    idx_lon <- which(lon > lons[1] & lon < lons[2])
-    idx_time <- which(time >= sdate & time <= edate)
-    
-    idx_sla <- paste(var,
-                     paste("[", range(idx_time)[1], ":1:", range(idx_time)[2], "]", sep = ""), 
-                     paste("[", range(idx_lat)[1],  ":1:", range(idx_lat)[2],  "]", sep = ""),
-                     paste("[", range(idx_lon)[1],  ":1:", range(idx_lon)[2],  "]", sep = ""),
-                     sep = "")
-    
-    idx_time <- paste("time",      paste("[", range(idx_time)[1], ":1:",range(idx_time)[2], "]", sep = ""), sep = "")
-    idx_lat  <- paste(lat_varid,  paste("[", range(idx_lat)[1],  ":1:",range(idx_lat)[2],  "]", sep = ""), sep = "")
-    idx_lon  <- paste(lon_varid, paste("[", range(idx_lon)[1],  ":1:",range(idx_lon)[2],  "]", sep = ""), sep = "")
-    idx <- paste(idx_lat, idx_lon, idx_time, idx_sla, sep = ",")
-    
-    url <- paste(url, idx, sep = "")
-    
-    data = nc_open(url, verbose = FALSE, write = FALSE)
-    ras  = ncvar_get(data)
-    lats = ncvar_get(data, varid = lat_varid)
-    lons = ncvar_get(data, varid = lon_varid)
-    time = ncvar_get(data, varid = "time")
-    attr = ncatt_get(data, varid = 0)
-    nc_close(data)
-    rm(data)
-    
-    s = dim(ras)
-    if(length(s) == 2) ras = raster(ras)
-    else ras = brick(ras) #may want raster() here 
-    ras = setZ(ras, z = as.Date(time, origin = org), name = "time")
-    #ras = setZ(ras, z = as.Date(getZ(ras), origin = "1900-01-01"), name = "time")
-    extent(ras) = extent(min(lons), max(lons), min(lats), max(lats))
-    #crs(ras) <- idk
-    ras
-  }
-  
-  ras = lapply(times, FUN = down_sat, data = data, lat= lat, lon=lon, time=time)
-  
-  # idk why thisgoes so 
-  time = lapply(ras, FUN = getZ)
-  time = unlist(time)
-  idx  = duplicated(time)
-  time = time[!idx]
-  
-  ras = do.call(stack, ras)
-  ras = subset(ras, which(!idx))
-  ras = setZ(ras, z = as.Date(time), name = "time")
-  }
+# DEPRECIATED
+# loadsat <- function(var = "sla",
+#                     url,
+#                     sdate = as.Date("2018-05-01"), 
+#                     edate = as.Date("2018-11-01"), 
+#                     lons = c(190-360, 230-360), 
+#                     lats = c(25, 32),
+#                     org = "1900-01-01",
+#                     lat_varid = "lat",
+#                     lon_varid = "lon",
+#                     by = 365
+#                     ){
+#   
+#   data = nc_open(url, verbose = FALSE, write = FALSE)
+#   lat  = ncvar_get(data, varid = lat_varid)
+#   lon  = ncvar_get(data, varid = lon_varid)
+#   time = ncvar_get(data, varid = "time")
+#   # time is in a crazy format. Maybe seperat loadchl function? Geting harry
+#   # seconds since 1970-01-01 00:00:00
+#   
+#   if(var == "CHL") {
+#     #time = as.POSIXct(time, origin = origin)
+#     time = as.Date(time, origin = org)
+#     #time = anydate(time)
+#   }
+#   
+#   #else time <- as.Date(time)
+#   # create a list of one year sequences 
+#   y <- year(sdate):year(edate)
+#   starts <- seq(from = sdate, to = edate, by = by)
+#   starts[length(starts)+1] <- edate #
+#   times <- list()
+#   for(i in 2:length(starts)) times[[i-1]] <- c(starts[i-1], starts[i])
+#   times = lapply(times, function(x) data.frame(sdate = x[[1]], edate = x[[2]]))
+#   
+#   # writing this function to apply it to each one year date span for download
+#   down_sat = function(x, data, lat, lon, time){
+#     sdate = x$sdate
+#     edate = x$edate
+#     
+#     #lon[lon < 0] = lon[lon < 0] + 360
+#     #lons[lons < 0] = lons[lons < 0] + 360
+#     
+#     # I need to convert lons to 0-360 for both
+#     idx_lat <- which(lat > lats[1] & lat < lats[2])
+#     idx_lon <- which(lon > lons[1] & lon < lons[2])
+#     idx_time <- which(time >= sdate & time <= edate)
+#     
+#     idx_sla <- paste(var,
+#                      paste("[", range(idx_time)[1], ":1:", range(idx_time)[2], "]", sep = ""), 
+#                      paste("[", range(idx_lat)[1],  ":1:", range(idx_lat)[2],  "]", sep = ""),
+#                      paste("[", range(idx_lon)[1],  ":1:", range(idx_lon)[2],  "]", sep = ""),
+#                      sep = "")
+#     
+#     idx_time <- paste("time",      paste("[", range(idx_time)[1], ":1:",range(idx_time)[2], "]", sep = ""), sep = "")
+#     idx_lat  <- paste(lat_varid,  paste("[", range(idx_lat)[1],  ":1:",range(idx_lat)[2],  "]", sep = ""), sep = "")
+#     idx_lon  <- paste(lon_varid, paste("[", range(idx_lon)[1],  ":1:",range(idx_lon)[2],  "]", sep = ""), sep = "")
+#     idx <- paste(idx_lat, idx_lon, idx_time, idx_sla, sep = ",")
+#     
+#     url <- paste(url, idx, sep = "")
+#     
+#     data = nc_open(url, verbose = FALSE, write = FALSE)
+#     ras  = ncvar_get(data)
+#     lats = ncvar_get(data, varid = lat_varid)
+#     lons = ncvar_get(data, varid = lon_varid)
+#     time = ncvar_get(data, varid = "time")
+#     attr = ncatt_get(data, varid = 0)
+#     nc_close(data)
+#     rm(data)
+#     
+#     s = dim(ras)
+#     if(length(s) == 2) ras = raster(ras)
+#     else ras = brick(ras) #may want raster() here 
+#     ras = setZ(ras, z = as.Date(time, origin = org), name = "time")
+#     #ras = setZ(ras, z = as.Date(getZ(ras), origin = "1900-01-01"), name = "time")
+#     extent(ras) = extent(min(lons), max(lons), min(lats), max(lats))
+#     #crs(ras) <- idk
+#     ras
+#   }
+#   
+#   ras = lapply(times, FUN = down_sat, data = data, lat= lat, lon=lon, time=time)
+#   
+#   # idk why thisgoes so 
+#   time = lapply(ras, FUN = getZ)
+#   time = unlist(time)
+#   idx  = duplicated(time)
+#   time = time[!idx]
+#   
+#   ras = do.call(stack, ras)
+#   ras = subset(ras, which(!idx))
+#   ras = setZ(ras, z = as.Date(time), name = "time")
+#   }
 
 # ------------------------------------------------------------------------------
 bufcoast = function(ras, 

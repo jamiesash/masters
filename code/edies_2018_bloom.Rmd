@@ -1,0 +1,558 @@
+---
+title: "eddies_blooms"
+author: "Jamie Ash"
+date: '2022-07-27'
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE}
+source("functions.R")
+source("libraries.R")
+rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
+knitr::opts_chunk$set(echo = TRUE)
+
+library(IndexNumR)
+library(imputeTS)
+library(sp)
+#library(rgdal)
+library(raster)
+library("plotrix")    
+# Load the data: chl
+```
+
+```{r}
+bloomdays = list(as.Date("2019-08-17"), as.Date("2020-08-08"), as.Date("2018-09-26"))
+lons = c(-170, -125)
+lats = c( 18,   37)
+domain  = extent(lons, lats)
+domain_edds = extent(domain[1]-2,
+                      domain[2]+2,
+                      domain[3]-2,
+                      domain[4]+2)
+```
+
+```{r}
+fronts = function(ras,
+                  downsize = 10,
+                  I = 2){
+  e    = extent(ras)
+  ras  = t(ras)
+  ras  = raster::flip(ras, direction = "x")
+  extent(ras) = e
+  
+  thresh = median(ras, na.rm = TRUE) + mad(ras, na.rm = TRUE)*I
+  idx  = which(values(ras) > thresh)
+  
+  e    = extent(ras)
+  s    = dim(ras)
+  lons = seq(from = e[1], to = e[2], length = s[1]) 
+  lats = seq(from = e[3], to = e[4], length = s[2]) 
+  grid = pracma::meshgrid(lons, lats)
+  fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = ras[idx])
+  idx = seq(1, nrow(fronts), downsize)
+  fronts = fronts[idx, ]
+  fronts
+}
+```
+
+```{r, warning = FALSE}
+# MET3 eddy data dowloaded directly from AVISO
+a_edds = load_edds(path = "..\\data\\eddies\\",
+                   file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
+                   sdate = bloomdays[[3]] - 100,
+                   edate = bloomdays[[3]] + 50,
+                   domain = domain_edds)
+
+c_edds = load_edds(path  = "..\\data\\eddies\\",
+                    file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
+                    sdate = bloomdays[[3]] - 100,
+                    edate = bloomdays[[3]] + 50,
+                    domain = domain_edds)
+
+# I'm uploading the large data set for the anomaly calculation
+chl = loadsat(url = "https://coastwatch.noaa.gov//erddap",
+              id  = "noaacwNPPN20S3ASCIDINEOFDaily",
+              lat = lats,
+              lon = lons,
+              parameter = c("all"),
+              sdate = bloomdays[[3]] - 100,
+              edate = bloomdays[[3]] + 50,
+              large = FALSE)
+
+sla = loadsat(url = "https://coastwatch.pfeg.noaa.gov/erddap",
+              id  = "nesdisSSH1day",
+              parameter = c("sla", "time", "latitude", "longitude"),   
+              lat = lats,
+              lon = lons,
+              sdate = bloomdays[[3]] - 100,
+              edate = bloomdays[[3]] + 60,
+              large = TRUE,
+              by = 100)
+
+fsle = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
+               patt = "fsle_po_2018.nc")
+
+gc()
+```
+
+correct oreantation
+```{r}
+chl = oreant(chl, t1 = TRUE)
+sla = oreant(sla, flip = "y", t1 = TRUE)
+fsle = oreant(fsle, flip = "y", t1 = TRUE)
+```
+
+check oreantation
+```{r}
+plot(chl[[1]])
+
+plot(fsle[[1]])
+
+plot(sla[[1]])
+```
+
+Crop to size
+```{r}
+fix_fsle = function(x) {
+  time = getZ(x)
+  e = extent(x) - c(360, 360, 0 ,0)
+  x  = x * -1
+  extent(x) = e
+  x = setZ(x, z = time, name = "time")
+  x
+  }
+
+fsle = fix_fsle(fsle)
+
+# 2020 and 2019 2018
+e = extent(-170, -130, 18, 36)
+
+fsle = crop(fsle, e)
+sla = crop(sla, e)
+chl = crop(chl, e)
+```
+
+Make FSLE, CHL and SLA the same time span.
+```{r}
+sdate = max(min(getZ(chl)), min(getZ(fsle)), min(getZ(sla)))
+edate = min(max(getZ(chl)), max(getZ(fsle)), max(getZ(sla)))
+fsle = timesnip(fsle, sdate = sdate, edate = edate)
+chl  = timesnip(chl,  sdate = sdate, edate = edate)
+sla  = timesnip(sla,  sdate = sdate, edate = edate)
+gc()
+```
+
+remove coastal effects
+```{r}
+chl  = bufcoast(chl, 
+                region = "Hawaiian Islands", 
+                path = "../data/USMaritimeLimitsAndBoundariesSHP")
+fsle = bufcoast(fsle, 
+                region = "Hawaiian Islands", 
+                path = "../data/USMaritimeLimitsAndBoundariesSHP")
+
+sla = bufcoast(sla, 
+                region = "Hawaiian Islands", 
+                path = "../data/USMaritimeLimitsAndBoundariesSHP")
+
+gc()
+```
+
+remove short lived eddies
+```{r, eval = FALSE}
+ind = unique(a_edds$id)
+
+duration = vector()
+j = 0
+for(i in ind){
+  j = j+1
+  temp = subset(a_edds, id == i)
+  duration[j] = length(unique(temp$time))
+}
+
+idx = which(duration < 8)
+bad_edds = ind[idx]
+bad_edds = is.element(a_edds$id, bad_edds)
+a_edds = subset(a_edds, !bad_edds)
+```
+
+Only CHL bloom values
+```{r}
+chl_l  = list()
+for(i in 1:dim(chl)[3]) chl_l[[i]] = chl[[i]]
+
+chl_points  = lapply(chl_l, fronts, I = 2, downsize = 1)
+
+# removes NA values and values less than 0.05
+pretty = function(x, thresh = 0.05) {
+  x = subset(x, !is.na(value))
+  x = subset(x, value > thresh) 
+  x 
+  }
+
+chl_points = lapply(chl_points, FUN = pretty)
+```
+
+Plotting eddies over FSLE
+```{r}
+wdmap = getMap(resolution = "high")
+s = dim(fsle)
+
+ani.record(reset = TRUE)
+for(i in 1:s[3]){
+  bloom = chl_points[[i]]
+  
+  image(fsle[[i]], 
+          col = gray.colors(10, start = 1, end= 0.5, gamma = 1),
+          axes = FALSE,
+          ylab = "",
+          xlab = "")
+  
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+  
+  edds_day = subset(a_edds, time == getZ(fsle[[i]]))
+  ind = unique(edds_day$id)
+  for(j in ind){
+     pts <- subset(edds_day, id == j)
+     x   <- pts$lon
+     y   <- pts$lat
+     polygon(pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lon,
+             pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lat,
+             lwd = 2)
+  }
+  axis(side = 1,
+    #at = at,
+    #labels = labels,
+    las = 1, 
+    lwd = 2, 
+    mgp = c(2, 1, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))
+  axis(side = 2,
+    las  = 2, 
+    lwd  = 2, 
+    mgp  = c(1, 0.75, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))
+  title(main = getZ(fsle[[i]]),
+        cex.main = 1.75,
+        line = -1.5,
+        adj = 0.03)
+  title(ylab = "Latitude", cex.lab = 1.5, line = 2.5)
+  title(xlab = "Longitude", cex.lab = 1.5, line = 2.5)
+  plot(wdmap, 
+     xlim = e[1:2], 
+     ylim = e[3:4], 
+     asp = 1, 
+     bg = "white", 
+     border = "black", 
+     col = "pink", 
+     add = TRUE,
+     lwd = 2)
+  
+  box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+  
+  ani.record()
+  dev.off()
+}
+
+oopts = ani.options(interval = 0.1, ani.width = 750, ani.height = 600)
+saveGIF(ani.replay())
+ani.record(reset = TRUE) # clear it
+```
+
+Plotting eddies over FSLE
+```{r}
+wdmap = getMap(resolution = "high")
+s = dim(fsle)
+
+ani.record(reset = TRUE)
+for(i in 1:s[3]){
+  bloom = chl_points[[i]]
+  
+  image(fsle[[i]], 
+          col = gray.colors(10, start = 1, end= 0.5, gamma = 1),
+          axes = FALSE,
+          ylab = "",
+          xlab = "")
+  
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+
+  edds_day = subset(c_edds, time == getZ(fsle[[i]]))
+  ind = unique(edds_day$id)
+  for(j in ind){
+     pts <- subset(edds_day, id == j)
+     x   <- pts$lon
+     y   <- pts$lat
+     polygon(pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lon,
+             pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lat,
+             lwd = 2)
+  }
+  axis(side = 1,
+    #at = at,
+    #labels = labels,
+    las = 1, 
+    lwd = 2, 
+    mgp = c(2, 1, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))
+  axis(side = 2,
+    las  = 2, 
+    lwd  = 2, 
+    mgp  = c(1, 0.75, 0), 
+    cex.axis = 1.25,
+    col = colvect("grey22", alpha = 0.9))
+  title(main = getZ(fsle[[i]]),
+        cex.main = 1.75,
+        line = -1.5,
+        adj = 0.03)
+  title(ylab = "Latitude", cex.lab = 1.5, line = 2.5)
+  title(xlab = "Longitude", cex.lab = 1.5, line = 2.5)
+  plot(wdmap, 
+     xlim = e[1:2], 
+     ylim = e[3:4], 
+     asp = 1, 
+     bg = "white", 
+     border = "black", 
+     col = "pink", 
+     add = TRUE,
+     lwd = 2)
+  
+  box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+  
+  ani.record()
+  dev.off()
+}
+
+oopts = ani.options(interval = 0.1, ani.width = 750, ani.height = 550)
+saveGIF(ani.replay())
+ani.record(reset = TRUE) # clear it
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I could just add 2018 to this file and do a cross correlation for that year
+```{r, fig.width=10}
+library(raster)
+auto_c = resample(chl[[3]],  fsle[[3]])
+auto_f = resample(fsle[[3]], fsle[[3]])
+
+u = mean(values(auto_f), na.rm = TRUE)
+o = sd(values(auto_f), na.rm = TRUE)
+m = max(values(auto_f), na.rm = TRUE)
+
+auto_c[auto_c < 0.1] = NA
+
+b <- stack(auto_f, auto_c)
+b <- aggregate(b, 2, mean)
+y <- corLocal(b[[1]], b[[2]], test=TRUE )
+
+# ------------------------------------------------------------------------------
+auto_s = resample(sla[[3]], chl[[3]])
+auto_c = resample(chl[[3]], chl[[3]])
+
+auto_c[auto_c < 0.1] = NA
+
+#b <- stack(auto_f, auto_c)
+b <- stack(auto_s, auto_c)
+b <- aggregate(b, 2, mean)
+
+#run correlation
+x <- corLocal(b[[1]], b[[2]], test=TRUE )
+
+#view pearson correlation
+# image(x[[1]])
+# plot(auto_c)
+
+# ------------------------------------------------------------------------------
+al = c(seq(1, 0, length = 13), seq(0, 1, length = 13))
+
+image(x[[1]], col = colvect(cmocean("balance")(26), al))
+contour(auto_s,
+        nlevels = 7,
+        labels= FALSE, 
+        #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = seq(0, 1, length = 10)),
+        col = "grey22",# colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = 0.5),
+        axes = FALSE,
+        add = TRUE)
+box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+
+# ------------------------------------------------------------------------------
+auto_f[auto_f > u + o*2] = m
+auto_f[auto_f < u + o*2] = NA
+
+image(y[[1]], col = colvect(cmocean("balance")(26), al))
+image(auto_f,
+      #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = seq(0, 1, length = 10)),
+      #col = colvect(gray.colors(10, start = 1, end= 0.5, gamma = 1), alpha = 0.5),
+      col = "grey22",
+      axes = FALSE,
+      add = TRUE)
+box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+#funcrtion(ssh, eddies)
+ssh = sla[[2]]
+eddies = a_edds_2019
+image(ssh)
+ind <- unique(eddies$id)
+for(i in ind){
+   pts <- subset(eddies, id == i)
+   x <- pts$lon
+   y <- pts$lat
+   polygon(pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lon,
+           pts[order(atan2(x-mean(x), y-mean(y))), 1:2]$lat,
+           lwd = 2)
+}
+```
+
+```{r, fig.width = 10}
+
+ssh_bloom = function(ssh, bloom,current) {
+  range01 = function(x){(x-min(x))/(max(x)-min(x))}
+  bloom$value = range01(bloom$value)
+  current$value = range01(current$value)
+  
+  contour(ssh, nlevels = 5, drawlabels = FALSE, col =  colvect(rep("black", 5), alpha = seq(0, 1, length = 5)))
+  points(bloom$lons, 
+         bloom$lats, 
+         col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
+         pch = 20,
+         cex = 1)
+  points(current$lons, 
+         current$lats, 
+         col = colvect(rep("black", length(current$value)), alpha = current$value),
+         pch = 20,
+         cex = 1)
+  wdmap = getMap(resolution = "high")
+  plot(wdmap, 
+       xlim = e[1:2], 
+       ylim = e[3:4], 
+       asp = 1, 
+       bg = "white", 
+       border = "black", 
+       col = "pink", 
+       add = TRUE,
+       lwd = 2)
+  box(which = "plot",
+        lty = "solid",
+        lwd = 3,
+        col = colvect("grey22", alpha = 0.9))
+  }
+
+ssh_bloom(ssh = sla[[1]], bloom = c[[1]], current = f[[1]])
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,147 @@
+---
+title: "Figure Discussion"
+author: "Jamie Ash"
+date: "2022-08-24"
+output: pdf_document
+---
+
+# Pre-Processing ---------------------------------------------------------------
+
+## Data Downbload: 
+
+## General Processing ----------------------------------------------------------
+
+## Figure 4: HPLC against Satellite CHL Comparison and CHL Climatologies
+
+**Discussion:** Done
+
+# Characterizing CHL blooms ----------------------------------------------------
+
+## Table 1: Summary table of late summer CHL blooms in the NPSG
+
+## Figure 1: Monthly Composites of $CHL_{sat}$ in the NPSG
+
+## Figure 2: Bloom centers and maximum area
+
+## Figure 3: Bloom duration and day of year
+
+**Discussion:** While meso-scale blooms the size of Hawaii (big island) occur 
+every year, blooms larger than $10,000 km^2$ occur semi-annually. These blooms 
+tend to last approximately 20 - 100 days. A few blooms (2007, 2015, 2020) begin 
+in the late summer, August - September, but persist until the winter where they 
+are engulfed by the subtropical CHL front, making a true end date difficult to 
+distinguish. Conversely some blooms notably 2005 and 2019 (Toyoda explains 
+these), begin as the subtropical CHL front recedes and a true start date is 
+difficult to distinguish. In some cases, 2007 and 2020 multiple large blooms 
+occur in a single year. 
+
+Bloom magnitudes range from 0.17 - 3.00, with a median value of $0.67 [mg/m^2]$, 
+approximately $\times 4.5$ the background $1-1.5 [mg/m^3]$. Some of the stronger
+blooms occurred along 30N in 2011, 2007, and 2020. The magnitude of the raw 
+chlorophyll satellite signal does not taking into account the northward 
+chlorophyll gradient. When considering the chlorophyll anomaly's maximum
+magnitude that does correct for the northward chlorophyll gradient, the years
+XXXX, XXXX had the strongest blooms which occurred at Stn. Aloha and 30N 
+respectively. 
+
+The area of the blooms range from $1.37 \times 10^4 [km^2]$ in 2012 to  
+$9.43 \times 10^5 [km^2]$ in 2018. This excludes blooms less than 
+$1 \times 10^5 [km^2]$ and those that are engulfed by the subtropical 
+chlorophyll front. The blooms appear to cluster in three locations, that is, 
+near Stn. ALOHA at [25N, -152W], at approximately [32N, 160W] and [32N, 140W]. 
+
+Interestingly, the maximum magnitude of each bloom occurs towards the XXXX or 
+the bloom's lifespan. 
+
+
+# 2018 Case Study --------------------------------------------------------------
+
+## Figure 6:  k-means cluster analysis of (sub)mesoscale regions
+
+**Discussion:** 
+
+## Figure 5: Two late summer CHL blooms relationship to fronts and eddies
+
+**Discussion:** Both blooms appear to be associated with frontal features with 
+little apparent association to mesoscale eddies.
+
+## Figure 7: Spatio-temporal evolution of the 2018 bloom
+
+**Discussion:** 
+
+## Figure 8: Satellite-based time series of the 2018 bloom
+
+Time-series progression of the onset and demise of the 2018 bloom in the NPSG. 
+Black and grey lines (95% confidence interval) are a GAM smoother. Figure a) 
+shows the surface, figure b) shows the biomass, and figure c) shows the depth 
+integrated CHL concentration.
+
+**Discussion:** 
+
+## Figure 9: (Sub)mesoscale features across the lifespan of the 2018 bloom
+
+Time-series of bloom percent association (deviation from the background) of bloom 
+values to cyclonic eddies, anti-cyclonic eddies and frontal features. Percent 
+association is the percent of each (sub)mesoscale region’s area that is 
+associated with a bloom feature.
+
+**Discussion:** 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

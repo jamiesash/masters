@@ -4,6 +4,7 @@ author: "Jamie Ash"
 date: "2022-08-19"
 output: pdf_document
 ---
+4/5
 
 # Pre-Processing ---------------------------------------------------------------
 
@@ -122,12 +123,11 @@ chlorophyll signal over the daily surface area of the bloom patch.
 
 **Methods:** The total percent of bloom values in the CHL anomaly field that 
 coincided (spatially and temporarily) with each (sub)mesoscale region was 
-calculated at daily intervals and represented as a time-series (Figure (9). To 
-find the effect each region had on the bloom association to each (sub)mesoscale 
+calculated at daily intervals and represented as a time-series (Figure 9). To 
+find the effect each region had on thebloom association to each (sub)mesoscale 
 region, the daily background signal was subtracted from each time-series. The 
 background signal was calculated by finding the total percent by day of points 
-in the CHL anomaly fields that are considered bloom values. 
-
+in the CHL anomaly fields that are considered bloom values (Figure 9). 
 
 
 
