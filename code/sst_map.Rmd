@@ -1,0 +1,600 @@
+---
+title: "Untitled"
+author: "Jamie Ash"
+date: "2022-10-17"
+output: html_document
+---
+
+```{r, include=FALSE, message = FALSE}
+source("functions.R")
+source("libraries.R")
+rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Custom functions 
+```{r, message = FALSE}
+
+load_nc = function(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\fsle\\",
+                   patt = "fsle_po_2018.nc", 
+                   vars = c("lat", "lon", "fsle_max", "time"),
+                   origin = "1950-01-01"){
+  infile = paste(path, patt, sep = "")
+  file  = nc_open(infile)
+  lat   = ncvar_get(file, varid = "lat")
+  lon   = ncvar_get(file, varid = "lon")
+  ras   = ncvar_get(file, varid = "fsle_max")
+  t     = ncvar_get(file, varid = "time")
+  attr  = ncatt_get(file, varid = 0)
+  t     = as.Date(t, origin = as.Date(origin))
+  ras   = brick(ras)
+  extent(ras) = extent(min(lon), max(lon), min(lat), max(lat))
+  fsle  = setZ(ras, z = t, name = "time")
+  fsle
+}
+# input is a boolian raster layer of 0/1 
+# output is a data frame with only high values included
+# Downlsize reduces the size of the data set
+# I may like to simultaniously index the chl signal as well
+# chl_fronts = function(blooms,
+#                       signal,
+#                       downsize = 10){
+#   ras  = raster::flip(blooms, direction = "x")
+# 
+#   idx  = which(values(blooms) == TRUE) # == TRUE
+#   
+#   e    = extent(blooms)
+#   s    = dim(blooms)
+#   lons = seq(from = e[1], to = e[2], length = s[1]) 
+#   lats = seq(from = e[3], to = e[4], length = s[2]) 
+#   grid = pracma::meshgrid(lons, lats)
+#   # using the blooms index to subset the signal values
+#   fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = signal[idx])
+#   idx = seq(1, nrow(fronts), downsize)
+#   fronts = fronts[idx, ]
+#   fronts
+# }
+
+# use the apply function to apply the calc mean function for every 8 layers
+
+avestack = function(ras, by = 8, fun){
+  s      = dim(ras)
+  idx_8d = rep(1:ceiling(s[3]/8), 8)
+  idx_8d = sort(idx_8d)
+  rem    = abs(s[3] - length(idx_8d))
+  idx_8d = idx_8d[1:(length(idx_8d)-rem)]
+  idx_og = 1:s[3]
+  idx    = data.frame(idx_8d = idx_8d, idx_og = idx_og)
+  idx$idx_8d = as.factor(idx$idx_8d)
+  idx = split(idx, idx_8d)
+  
+  # subset and average every eight days
+  tempset = function(x, ras) ras[[x$idx_og]]
+  days = lapply(idx, FUN = tempset, ras = ras)
+  days = lapply(days, FUN = calc, fun = fun, na.rm = TRUE)
+  days
+}
+
+# ------------------------------------------------------------------------------
+# input is a raster output is a boolian raster of bloom/not bloom
+bool = function(x){
+  u <- calc(x, fun = median, na.rm = TRUE)
+  o <- calc(x, fun = mad, na.rm = TRUE)
+  boo <- x > (u + o)
+  extent(boo) <- extent(x)
+  boo <- setZ(boo, z = getZ(x), name = "time")
+  boo
+}
+
+# ------------------------------------------------------------------------------
+jamie_theme <- function(x,
+                        y, 
+                        mar = c(1,1,1,1),
+                        line = 0.75,
+                        adj = 0,
+                        #asp = 1,
+                        ylim = range(y),
+                        xlim = range(x),
+                        main = "",
+                        dt = TRUE,
+                        ylab = "",
+                        xlab = "",
+                        yaxes = FALSE,
+                        xaxes = FALSE
+                        ){
+  if(is.numeric(x)) x <- round(x, 1)
+  if(is.numeric(y)) y <- round(y, 1)
+  par(mar = mar)
+  plot(0,
+       ylim = ylim,
+       xlim = xlim,
+       main = "",
+       xlab = "",
+       ylab = "",
+       axes = FALSE,
+       )
+  if(xaxes){
+    axis(side = 1,
+         las = 1, 
+         lwd = 2, 
+         mgp = c(2, 1, 0), 
+         cex.axis = 1,
+         col = colvect("grey22", alpha = 0.9))
+    }
+  if(yaxes){
+    axis(side = 2,
+         las  = 2, 
+         lwd  = 2, 
+         mgp  = c(1, 0.75, 0), 
+         cex.axis = 1,
+         col = colvect("grey22", alpha = 0.9))
+    }
+  grid(nx = NULL, # X-axis divided in two sections
+       ny = NULL, # Y-axis divided in three sections
+       lty = 2, 
+       col = colvect(c("gray69"), alpha = 0.5), lwd = 1)
+  box(which = "plot", 
+      lty = "solid", 
+      lwd = 3, 
+      col = colvect("grey22", alpha = 0.9))
+  title(main = main,
+        cex.lab = 2,
+        line= line,
+        adj = adj)
+  title(ylab = ylab, cex.lab = 1.5, line = 2.5)
+  title(xlab = xlab, cex.lab = 1.5, line = 2.5)
+}
+
+# ------------------------------------------------------------------------------
+# # input is a raster
+# chl_fronts = function(ras,
+#                       downsize = 10,
+#                       I = 2){
+#   ras  = raster::flip(ras, direction = "x")
+#   thresh = median(ras, na.rm = TRUE) + mad(ras, na.rm = TRUE)*I
+#   
+#   idx  = which(values(ras) == 1)
+#   
+#   e    = extent(ras)
+#   s    = dim(ras)
+#   lons = seq(from = e[1], to = e[2], length = s[1]) 
+#   lats = seq(from = e[3], to = e[4], length = s[2]) 
+#   grid = pracma::meshgrid(lons, lats)
+#   fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = ras[idx])
+#   idx = seq(1, nrow(fronts), downsize)
+#   fronts = fronts[idx, ]
+#   fronts
+# }
+
+# x is a single row data frame with column sdate and edate
+# ras is a raster to be cut 
+durationsnip = function(x,
+                        ras) {
+  # subset time
+  t = getZ(ras)
+  sdate = x$sdate
+  edate = x$edate
+  ind_t = which(t > sdate & t < edate)
+  indx_bool = (t > sdate & t < edate)
+  x = subset(x, ind_t)
+  t = subset(t, indx_bool)
+  x = setZ(x, z = t, name = "time")
+  x
+}
+
+bloom_snip = function(x,
+                     ras) {
+  sdate = x$sdate
+  edate = x$edate
+  # subset time
+  t = getZ(ras)
+  
+  start = which.min(abs(t - sdate))
+  end   = which.min(abs(t - edate))
+  ind_t = start:(start+4)
+  #ind_t = which(t > sdate & t < edate)
+  #indx_bool = (t > sdate & t < edate)
+  idx_boo = is.element(t, t[ind_t])
+  ras = subset(ras, ind_t)
+  t   = subset(t, idx_boo)
+  ras = setZ(ras, z = t, name = "time")
+  ras
+}
+
+# fronts = function(blooms, signal){
+#   # input is a raster
+#   temp = function(layer,
+#                   boo,
+#                   downsize = 10,
+#                   I = 2){
+#     layer = raster::flip(layer, direction = "x")
+#     boo = raster::flip(boo, direction = "x")
+#     #thresh = median(signal, na.rm = TRUE) + mad(signal, na.rm = TRUE)*I
+#     
+#     idx  = which(values(boo) == 1)
+#     
+#     e    = extent(layer)
+#     s    = dim(layer)
+#     lons = seq(from = e[1], to = e[2], length = s[1]) 
+#     lats = seq(from = e[3], to = e[4], length = s[2]) 
+#     grid = pracma::meshgrid(lons, lats)
+#     fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = layer[idx])
+#     idx = seq(1, nrow(fronts), downsize)
+#     fronts = fronts[idx, ]
+#     fronts
+#   }
+#   
+#   chlb_l = list()
+#   chla_l = list()
+#   for(i in 1:dim(blooms)[3]) chlb_l[[i]] = blooms[[i]]
+#   for(i in 1:dim(signal)[3]) chla_l[[i]] = signal[[i]]
+#   
+#   mapply(temp, boo = chlb_l, layer = chla_l, SIMPLIFY = FALSE)
+# }
+
+fronts = function(ras,
+                  downsize = 10,
+                  I = 2){
+  e    = extent(ras)
+  ras  = t(ras)
+  ras  = raster::flip(ras, direction = "x")
+  extent(ras) = e
+  
+  thresh = median(ras, na.rm = TRUE) + mad(ras, na.rm = TRUE)*I
+  idx  = which(values(ras) > thresh)
+  
+  e    = extent(ras)
+  s    = dim(ras)
+  lons = seq(from = e[1], to = e[2], length = s[1]) 
+  lats = seq(from = e[3], to = e[4], length = s[2]) 
+  grid = pracma::meshgrid(lons, lats)
+  fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = ras[idx])
+  idx = seq(1, nrow(fronts), downsize)
+  fronts = fronts[idx, ]
+  fronts
+}
+
+# input is a boolian raster layer of 0/1 
+# output is a data frame with only high values included
+# Downlsize reduces the size of the data set
+# I may like to simultaniously index the chl signal as well
+chl_fronts = function(blooms,
+                      signal,
+                      downsize = 10){
+  
+  e    = extent(signal)
+  signal  = t(signal)
+  signal  = raster::flip(signal, direction = "x")
+  extent(signal) = e
+  # 
+  e    = extent(blooms)
+  blooms  = t(blooms)
+  blooms  = raster::flip(blooms, direction = "x")
+  extent(blooms) = e
+  
+  idx  = which(values(blooms) == TRUE) # == TRUE
+  
+  e    = extent(blooms)
+  s    = dim(blooms)
+  lons = seq(from = e[1], to = e[2], length = s[1]) 
+  lats = seq(from = e[3], to = e[4], length = s[2]) 
+  grid = pracma::meshgrid(lons, lats)
+  # using the blooms index to subset the signal values
+  fronts = data.frame(lons = grid$X[idx], lats = grid$Y[idx], value = signal[idx])
+  idx = seq(1, nrow(fronts), downsize)
+  fronts = fronts[idx, ]
+  fronts
+}
+
+# use the apply function to apply the calc mean function for every 8 layers
+
+avestack = function(ras, by = 8, fun){
+  t = getZ(ras)
+  s      = dim(ras)
+  idx_8d = rep(1:ceiling(s[3]/8), 8)
+  idx_8d = sort(idx_8d)
+  rem    = abs(s[3] - length(idx_8d))
+  idx_8d = idx_8d[1:(length(idx_8d)-rem)]
+  idx_og = 1:s[3]
+  t_idx  = unique(idx_8d)
+  idx    = data.frame(idx_8d = idx_8d, idx_og = idx_og)
+  idx$idx_8d = as.factor(idx$idx_8d)
+  idx = split(idx, idx_8d)
+  
+  # subset and average every eight days
+  tempset = function(x, ras) ras[[x$idx_og]]
+  days = lapply(idx, FUN = tempset, ras = ras)
+  days = lapply(days, FUN = calc, fun = fun, na.rm = TRUE)
+  days = brick(days)
+  days = setZ(days, z = t[t_idx], name = "time")
+  days
+  }
+
+# Writing this as a function to take a date range, a chl anomaly signal, 
+# and output an area time-series
+
+# Input is 3D chla raster output is time series vector of bloom area
+bloom_area = function(b){
+  t    = getZ(b)
+  rr   = reclassify(b, cbind(0,NA))
+  a    = raster::area(rr)
+  temp = raster::mask(a, rr)
+  
+  km2  = cellStats(temp, stat = "sum", na.rm = TRUE)
+  data.frame(area = as.numeric(km2), time= t)
+}
+
+# input x is a raster of raw chl
+# inpur x is a raster of 0/1 bloom non-bloom
+bloom_mag = function(x, b){
+  t = getZ(x)
+  # Area time series for duration 
+  rr   = reclassify(b, cbind(0,NA))
+  # find area of each cell + mask cells that matter
+  temp = raster::mask(x, rr)
+  mag  = cellStats(temp, stat ="max", na.rm = TRUE)
+  data.frame(mag = as.numeric(mag), time= t)
+}  
+
+
+# 
+bool = function(x){
+  u <- calc(x, fun = median, na.rm = TRUE)
+  o <- calc(x, fun = mad, na.rm = TRUE)
+  boo <- x > (u + o)
+  extent(boo) <- extent(x)
+  boo <- setZ(boo, z = getZ(x), name = "time")
+  boo
+}
+
+vectorize  <- function(x) {
+  sdate <- getZ(x)
+  # x = raster::flip(x, direction = "x")
+  # x = raster::flip(x, direction = "y")
+  # 
+  e = extent(x)
+  x = t(x)
+  extent(x) = e
+  # 
+  x     <- rasterToPoints(x)
+  x     <- data.frame(x)
+  colnames(x) <- c("lon", "lat", as.character(sdate))
+  x     <- reshape2::melt(x, id.vars = c("lat", "lon"))
+  colnames(x) <- c("lats", "lons", "time", "val")
+  x
+}
+
+tsect <- function(x, y, z, xreach = 1, yreach = 1, xlen = 120, ylen = 40){
+  #make a max min vector of sla and fsle
+  coord = c(max(x, na.rm = TRUE), min(x, na.rm = TRUE), 
+            max(y, na.rm = TRUE), min(y, na.rm = TRUE))
+  
+  # use maxmin vector to create fake x, y vectors (downsized) as meshgrid input
+  y_vec <- seq(from = coord[4], to = coord[3], length.out = ylen) 
+  # may need to invert to be same length 
+  x_vec <- seq(from = coord[2], to = coord[1], length.out = xlen)
+  xy_grid <- meshgrid(x_vec, y_vec)
+  
+  #inisilize a matrix of dim fs_grid[1] filled with NA values
+  dims <- dim(xy_grid[[1]])
+  z_grid <- matrix(data = NA, 
+                   nrow = dims[1], 
+                   ncol = dims[2], 
+                   dimnames = NULL)
+  
+  for(iy in 1:dims[1]) {
+    for(ix in 1:dims[2]){
+      # where in the df is the difference greater than the units
+      box_x <- which(abs(x - xy_grid[[1]][iy, ix]) <= xreach)
+      box_y <- which(abs(y - xy_grid[[2]][iy, ix]) <= yreach)
+      # I think the grids are dif sizes and should be subet differently
+      #index vector of both cox_sla and box_fsle as one
+      #box <- sort(match(box_y, box_x))
+      
+      # I think this is the correct way to do this
+      box <- box_x[box_x %in% box_y]
+      
+      z_grid[iy, ix] <- mean(z[box], na.rm = TRUE)
+    }
+  }
+  
+  list(z_grid, y_vec, x_vec)
+}
+
+```
+
+load data
+```{r}
+
+
+# daily raw high res model sst
+# https://coastwatch.pfeg.noaa.gov/erddap
+# jplMURSST41
+# analysed_sst
+
+# monthly raw model high res sst
+# https://coastwatch.pfeg.noaa.gov/erddap
+# jplMURSST41mday
+# sst
+
+# monthly and daily anomaly high res model
+# https://coastwatch.pfeg.noaa.gov/erddap
+# jplMURSST41anom1day
+# jplMURSST41anommday
+# sstAnom
+
+# 
+# erdMBsstd1day_LonPM180
+# https://coastwatch.pfeg.noaa.gov/erddap
+# sst 
+
+# erdMH1sstd1dayR20190SQ
+# https://coastwatch.pfeg.noaa.gov/erddap
+# sstMasked
+
+# NOAA_DHW_monthly
+# https://coastwatch.pfeg.noaa.gov/erddap
+# sea_surface_temperature_anomaly
+# sea_surface_temperature
+
+# https://coastwatch.pfeg.noaa.gov/erddap
+# erdMBsstd3day_LonPM180
+# sst
+
+lons = c(-179, -132) 
+lats = c( 18,   45) 
+
+chl = loadsat(url = "https://coastwatch.noaa.gov//erddap",
+              id  = "noaacwNPPN20S3ASCIDINEOFDaily",
+              lat = lats,
+              lon = lons,
+              parameter = c("all"),
+              sdate = as.Date("2018-07-01"),
+              edate = as.Date("2022-01-30"),
+              large = FALSE)
+
+rerddap::cache_delete_all()
+ssta = loadsat(url = "https://coastwatch.pfeg.noaa.gov/erddap",
+               id  = "jplMURSST41anom1day",
+               lat = lats,
+               lon = lons,
+               parameter = c("sstAnom"),
+               sdate = as.Date("2018-04-01"),
+               edate = as.Date("2018-06-01"),
+               large = TRUE,
+               by = 10)
+```
+
+```{r}
+wdmap <- getMap(resolution = "high")
+e = extent(ssta)
+zlim = c(-4, 2)
+dates <- getZ(ssta)
+#ssta = anomalize(sst, detrend = FALSE)
+for (i in 1:12){
+  sst_t = oreant(ssta[[i]], t1 = TRUE, flip = "y")
+  sst_t = raster::clamp(sst_t, zlim[1], zlim[2])
+  plot(sst_t, 
+       zlim=zlim, 
+       main = dates[i])
+  plot(wdmap, 
+       xlim = e[1:2], 
+       ylim = e[3:4], 
+       asp = 1, 
+       bg = "white", 
+       border = "black", 
+       col = "ivory", 
+       #wrap = c(-180, 180), 
+       add = TRUE)
+}
+```
+
+
+
+
+
+
+```{r}
+data_info <- rerddap::info(id, url = url)
+  
+  down_chl <- function(window,
+                       data_info = data_info,
+                       longitude = lon, 
+                       latitude  = lat, 
+                       fields    = parameter, 
+                       url       = url_base){
+    griddap(x = data_info, 
+            longitude = lon, 
+            latitude  = lat, 
+            time   = window, 
+            fields = parameter, 
+            url    = url_base)
+  }
+  
+  if(large == TRUE){
+    # create a list of one year sequences 
+    y <- year(sdate):year(edate)
+    starts <- seq(from = sdate, to = edate, by = by)
+    starts[length(starts)+1] <- edate 
+    starts <- paste(as.character(starts), 
+                    "T00:00:00Z", 
+                    sep = "")
+    
+    times <- list()
+    for(i in 2:length(starts)) times[[i-1]] <- c(starts[i-1], starts[i])
+    
+    # Windows can paralleling this but could do it with a for loop
+    # blocks <- lapply(X = times, FUN = down_chl)
+    
+    blocks = list()
+    for(i in 1:length(times)){
+      blocks[[i]] = down_chl(window = times[[i]],
+                             data_info = data_info,
+                             longitude = lon, 
+                             latitude  = lat, 
+                             fields    = parameter, 
+                             url       = url_base)
+      }
+    
+    
+    data <- lapply(data, function(x) nc_open(x$summary$filename))
+    ras  <- lapply(data, ncvar_get)
+    lat  <- lapply(data, ncvar_get, varid = "latitude")
+    lon  <- lapply(data, ncvar_get, varid = "longitude")
+    time <- lapply(data, ncvar_get, varid = "time")
+    #chl <- lapply(data, ncvar_get, varid = "chlorophyll")
+    lapply(data, nc_close)
+    time <- lapply(time, function(x) as.Date(as.POSIXct(x, origin = "1970-01-01")))
+    
+    ras <- lapply(ras, 
+                  function(x) {
+                    if(is.na(dim(x)[3])) dim(x) <- c(dim(x)[1], dim(x)[2], 1)
+                    brick(x)
+                  })
+    
+    time <- as.Date(unlist(time))
+    idx <- !duplicated(time)
+    ras <- brick(ras)
+    ras <- subset(ras, which(idx))
+    ras <- setZ(ras, z = time[idx], name = "time")
+    extent(ras) <- extent(min(lon[[1]]), max(lon[[1]]), min(lat[[1]]), max(lat[[1]]))
+  } 
+  else {
+    t <- paste(as.character(c(sdate, edate)), 
+               c("T00:00:00Z", "T00:00:00Z"), 
+               sep = "")
+    
+    data_info <- rerddap::info(id, url = url)
+    data <- griddap(data_info, 
+                    longitude = lon, 
+                    latitude = lat, 
+                    time = t, 
+                    fields = parameter, 
+                    url = url_base
+                    )
+    
+    data <- nc_open(data$summary$filename)
+    ras  <- ncvar_get(data)
+    lats <- ncvar_get(data, varid = "latitude")
+    lons <- ncvar_get(data, varid = "longitude")
+    time <- ncvar_get(data, varid = "time")
+    attr <- ncatt_get(data, varid = 0)
+    nc_close(data)
+    rm(data)
+    
+    time <- as.Date(as.POSIXct(time, origin = "1970-01-01"))
+    
+    ras <- brick(ras) 
+    ras <- setZ(ras, z = time, name = "time")
+    extent(ras) <- extent(min(lons), max(lons), min(lats), max(lats))
+    }
+  crs(ras) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+  #print("remember to clear cache Users james AppData Local cache R rerddap")
+  ras
+```
+
+
+
+
+
+
