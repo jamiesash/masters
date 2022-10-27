@@ -6,8 +6,9 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE, message = FALSE}
-source("../R/functions.R")
-source("../R/libraries.R")
+source("functions.R")
+source("libraries.R")
+source("blooms.R")
 rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -123,7 +124,7 @@ jamie_theme <- function(x,
 
 load data
 ```{r}
-blooms = read.csv("../data/outfiles/full_sum.csv")
+#blooms = read.csv("../data/outfiles/full_sum.csv")
 # subseting just 2018 for case study
 idx = year(blooms$sdate) == 2018
 sdate = as.Date(blooms$sdate[idx]) - 22
@@ -133,16 +134,30 @@ edate = as.Date(blooms$edate[idx]) + 22
 lons = c(-171, -129)
 lats = c( 17,   36)
 
+# I keep having issues with the upwelling server
 # I need to make sure I'm not saving a fuck tone of files
+
+# # I'm uploading the large data set for the anomaly calculation
+# chl = loadsat(url = "https://upwell.pfeg.noaa.gov/erddap",
+#               id  = "erdMH1chla1day",
+#               lat = lats,
+#               lon = lons,
+#               sdate = as.Date("2010-01-08"),
+#               edate = as.Date("2019-01-01"),
+#               large = TRUE,
+#               by    = 365)
+# 
+
 # I'm uploading the large data set for the anomaly calculation
-chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
-              id  = "erdMH1chla1day",
+chl = loadsat(url = "https://coastwatch.noaa.gov//erddap",
+              id  = "noaacwNPPN20S3ASCIDINEOFDaily",
               lat = lats,
               lon = lons,
-              sdate = as.Date("2010-01-08"),
-              edate = as.Date("2019-01-01"),
+              parameter = c("all"),
+              sdate = as.Date("2018-02-10"),
+              edate = as.Date("2022-06-01"),
               large = TRUE,
-              by    = 365)
+              by = 30)
 
 fsle = load_nc(path = "C:\\Users\\james\\Desktop\\jamieslife\\data\\infiles\\case_study\\",
                patt = "fsle_po_2018.nc")
@@ -190,6 +205,7 @@ gc()
 Calculate a CHL anomaly and index bloom values
 ```{r}
 chla = anomalize(ras = chl, detrend = FALSE)
+slaa = anomalize(ras = sla, detrend = FALSE)
 chlb = bool(x = chla)
 gc()
 ```
@@ -222,36 +238,41 @@ match = function(x, y){
   x
 }
 
-rasters = domains(rasters = c(fsle, sla, chlb, chla, chl))
+rasters = domains(rasters = c(fsle, sla, slaa, chlb, chla, chl))
 
 fsle = rasters[[1]]
 sla  = rasters[[2]]
-chlb = rasters[[3]]
-chla = rasters[[4]]
-chl  = rasters[[5]]
+slaa = rasters[[3]]
+chlb = rasters[[4]]
+chla = rasters[[5]]
+chl  = rasters[[6]]
 rm(rasters)
 gc() 
 
 fsle = match(x = fsle, y = chlb)
 sla  = match(x = sla,  y = chlb)
+slaa = match(x = slaa, y = chlb)
 gc()
 ```
 
 Cut to timespan of bloom from table 1
 ```{r}
-blooms = read.csv("../data/outfiles/full_sum.csv")
-# subseting just 2018 for case study
-idx = year(blooms$sdate) == 2018
-sdate = as.Date(blooms$sdate[idx]) - 22
-edate = as.Date(blooms$edate[idx]) + 22
+# blooms = read.csv("../data/outfiles/full_sum.csv")
+# # subseting just 2018 for case study
+# idx = year(blooms$sdate) == 2018
+# sdate = as.Date(blooms$sdate[idx]) - 22
+# edate = as.Date(blooms$edate[idx]) + 22
+edate = edate - 17
 
 chl  = timesnip(chl,  sdate, edate)
 chla = timesnip(chla, sdate, edate)
 chlb = timesnip(chlb, sdate, edate)
 fsle = timesnip(fsle, sdate, edate)
 sla  = timesnip(sla,  sdate, edate)
+slaa = timesnip(slaa,  sdate, edate)
 ```
 
+Resample to the size of FSLE
 ```{r resample}
 resample = function(ras, to, method = "bilinear"){
   raster::crs(ras) = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
@@ -272,38 +293,44 @@ chlb = resample(chlb, to = fsle)
 gc()
 sla  = resample(sla,  to = fsle)
 gc()
+slaa = resample(slaa, to = fsle)
+gc()
 fsle = resample(fsle, to = fsle)
 gc()
 ```
 
-Remove coastal influence
+Remove coastal influence: SOmething is wrong here
 ```{r}
 chlb = bufcoast(chlb, 
-               region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+                region = "Hawaiian Islands", 
+                path = "../data/USMaritimeLimitsAndBoundariesSHP")
 chla = bufcoast(chla, 
                region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
 chl = bufcoast(chl, 
                region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
 fsle = bufcoast(fsle, 
                region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
-sla = bufcoast(sla, 
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
+sla  = bufcoast(sla, 
                region = "Hawaiian Islands", 
-               path = "../data/infiles/USMaritimeLimitsAndBoundariesSHP")
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
+slaa = bufcoast(slaa, 
+               region = "Hawaiian Islands", 
+               path = "../data/USMaritimeLimitsAndBoundariesSHP")
 gc()
 ```
 
 Create table
 ```{r}
 # this is much simpler code but may take alot of memory
-xyz = tableit(c(sla, fsle, chl, chla, chlb))
-colnames(xyz) = c("lon", "lat", "time", "sla", "fsle", "chl", "chla", "chlb")
+xyz = tableit(c(sla, slaa, fsle, chl, chla, chlb))
+colnames(xyz) = c("lon", "lat", "time", "sla", "slaa", "fsle", "chl", "chla", "chlb")
 
 xyz$fsle = xyz$fsle * -1
 xyz = xyz[!is.na(xyz$sla),]
+xyz = xyz[!is.na(xyz$slaa),]
 xyz = xyz[!is.na(xyz$fsle),]
 gc()
 ```
@@ -331,17 +358,222 @@ kcluster = function(x){
                  algorithm = "Lloyd")
   data.frame(ktbl$cluster)[, 1]
 }
-d = as.factor(xyz$time)
-k = lapply(split(xyz, d), FUN = kcluster)
-k = unlist(k)
-xyz$k = as.numeric(k)
 
-df  = xyz[!is.na(xyz$chl),]
-df$k = as.factor(df$k)
+# changing sla to slaa funciton should be written better
+kcluster = function(x){
+  x$fsle = scale01(x$fsle)
+  x$sla  = scale01(x$slaa)
+  
+  us = median(x$slaa, na.rm = TRUE)
+  uf = median(x$fsle, na.rm = TRUE)
+  ms = mad(x$slaa, na.rm = TRUE)
+  mf = mad(x$fsle, na.rm = TRUE)
+  
+  cents = rbind(c(us,      uf),
+                c(us - ms, uf),
+                c(us + ms, uf),
+                c(us, uf + mf))
+  set.seed(225)
+  ktbl = kmeans(x[ ,c("slaa", "fsle")], 
+                 centers   = cents,
+                 iter.max  = 50,
+                 nstart    = 100, 
+                 algorithm = "Lloyd")
+  data.frame(ktbl$cluster)[, 1]
+}
+
+# d = as.factor(xyz$time)
+# k = lapply(split(xyz, d), FUN = kcluster)
+# k = unlist(k)
+# xyz$k = as.numeric(k)
+
+# apply to the entire dataset
+k = kcluster(xyz)
+k = as.numeric(k)
+#k = unlist(k) # maybe unessisaacry
+xyz$k = k
+
+# if I decide to do an entire timeseries then I will need to remove the seasoanl 
+# and climitiligical effect form the SLA. I will also need to apply this before
+# subsetting the bloom time. DONE as slaa
+
 gc()
 ```
+perform GAM 
+```{r}
+library(rgdal)
+library(mgcViz)
+df  = xyz[!is.na(xyz$chl),]
+df  = xyz[!is.na(df$chla),]
+df$regions = as.numeric(df$k)
+# Converting lat lon to distance
+xy   = cbind(df$lat, df$lon)
+#utms = rgdal::project(xy, "+proj=utm +zone=4 ellps=WGS84") # need to change zones
+utms = rgdal::project(xy, "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # need to change zones
+df$northing = utms[, 1]/1000
+df$easting  = utms[, 2]/1000
 
-subsisting each region t be plotted
+#xyz = xyz[!is.na(xyz$chla),]
+df_b = subset(df, chlb == 1)
+df_b$doy = as.numeric(format(df_b$time, '%j'))
+df_b$regions = as.factor(df_b$regions)
+gc()
+
+# I honestly don't know. Why convert it back?
+# xyz.sp = xyz
+# coordinates(xyz.sp) = c('easting', 'northing')
+# gam_2018 = gam(chla ~ s(doy, by = regions) + s(doy) + s(easting, northing), 
+#                data = df_b, 
+#                family = gaussian(link = "identity"))
+
+gam_2018 = gam(chla ~ s(doy) + s(easting, northing) + s(regions, k = 4, bs = "re"), 
+               data = df_b, 
+               family = gaussian(link = "identity"))
+
+gam_2018 = gam(chla ~ regions + s(doy) + s(easting, northing), 
+               data = df_b, 
+               family = gaussian(link = "identity"))
+
+# gam_2018 = gam(chla ~ s(time, by = regions) + s(easting, northing, k = 50), 
+#                 data = xyz, 
+#                 family = gaussian(link = "identity"))
+
+# gam_2018 = gam(chla ~ regions + s(time) + s(easting, northing, k = 50), 
+#                 data = xyz, 
+#                 family = gaussian(link = "identity"))
+
+summary(gam_2018)
+
+visreg(gam_2018)
+```
+# DATA VISUALIZATION
+
+Plotting the k-clusters as an image
+```{r, eval = FALSE}
+plot(xyz$slaa, xyz$fsle, col = xyz$k, pch = 20, cex = 0.5)
+```
+
+Visualizing the gam
+```{r, message = FALSE, fig.show = "hold",  fig.align = "center", fig.height = 8, warning = FALSE}
+start = as.Date("2018-06-15")
+end   = as.Date("2018-08-25")
+#b    = plot(gm_time)
+#dp   = as.data.frame(cbind(b[[1]]$x, b[[1]]$fit, b[[1]]$se))
+#ind  = which(dp$V2 == max(dp$V2))
+#peak = as.Date(dp$V1[ind])
+
+b = plot(gam_2018, all = TRUE)
+
+layout.matrix = matrix(c(1, 2,
+                          3, 4), 
+                        nrow = 2, 
+                        byrow = TRUE)
+
+nf = graphics::layout(layout.matrix, 
+                       heights = c(1, 1))
+
+mix  = as.data.frame(cbind(b[[2]]$x, b[[2]]$fit, b[[2]]$se))
+sub  = as.data.frame(cbind(b[[3]]$x, b[[3]]$fit, b[[3]]$se))
+mesn = as.data.frame(cbind(b[[4]]$x, b[[4]]$fit, b[[4]]$se))
+mesp = as.data.frame(cbind(b[[5]]$x, b[[5]]$fit, b[[5]]$se))
+
+time = as.data.frame(cbind(b[[1]]$x, b[[1]]$fit, b[[1]]$se))
+
+#geom_point(data= df_abs, aes(x= log(prd_l_1999), y=prd_gr), size = 0.5, alpha = 0.5) 
+#mix    = as.data.frame(cbind(b[[1]]$x, b[[1]]$fit, b[[1]]$se))
+title = c("Time", "Mixed", "(-) Mesoscale", "(+) Mesoscale", "Sub-mesoscale")
+shadedline(x    = mix$V1, 
+           ylim = c(min(mix$V2 - mix$V3), max(mix$V2 + mix$V3)),
+           y0 = mix$V2,
+           y1 = mix$V2 + mix$V3, 
+           y2 = mix$V2 - mix$V3,
+           title = "",
+           line = 0.7,
+           adj  = 0,
+           main = paste(title[2]),
+           ylab = "CHL Effect [mg/m^3]",
+           col  = "grey69",
+           xlab = "",
+           labels = format(as.Date(mix$V1), "%Y-%m-%d"),
+           mar = c(3, 5, 4, 1))
+# abline(v = peak, col = colvect("grey22", alpha = 0.5), lty = 1,
+#        lwd = 2)
+abline(v = start, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+abline(v = end, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+
+#sub    = as.data.frame(cbind(b[[2]]$x, b[[2]]$fit, b[[2]]$se))
+title = c("Time", "Mixed", "(-) Mesoscale", "(+) Mesoscale", "Sub-mesoscale")
+shadedline(x = sub$V1, 
+           ylim = c(min(sub$V2 - sub$V3), max(sub$V2 + sub$V3)),
+           y0 = sub$V2,
+           y1 = sub$V2 + sub$V3, 
+           y2 = sub$V2 - sub$V3,
+           title = "",
+           line = 0.7,
+           adj = 0,
+           main = paste(title[3]),
+           ylab = "",
+           col = "grey69",
+           xlab = "",
+           labels = format(as.Date(sub$V1), "%Y-%m-%d"),
+           mar = c(3, 3, 4, 3))
+# abline(v = peak, col = colvect("grey22", alpha = 0.5), lty = 1,
+#        lwd = 2)
+abline(v = start, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+abline(v = end, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+
+#mesn    = as.data.frame(cbind(b[[3]]$x, b[[3]]$fit, b[[3]]$se))
+title = c("Time", "Mixed", "(-) Mesoscale", "(+) Mesoscale", "Sub-mesoscale")
+shadedline(x = mesn$V1, 
+           ylim = c(min(mesn$V2 - mesn$V3), max(mesn$V2 + mesn$V3)),
+           y0 = mesn$V2,
+           y1 = mesn$V2 + mesn$V3, 
+           y2 = mesn$V2 - mesn$V3,
+           title = "",
+           line = 0.7,
+           adj = 0,
+           main = paste(title[4]),
+           ylab = "CHL Effect [mg/m^3]",
+           col = "grey69",
+           xlab = "Month of Year",
+           labels = format(as.Date(mesn$V1), "%Y-%m-%d"),
+           mar = c(5, 5, 2, 1))
+# abline(v = peak, col = colvect("grey22", alpha = 0.5), lty = 1,
+#        lwd = 2)
+abline(v = start, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+abline(v = end, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+
+#mesp    = as.data.frame(cbind(b[[4]]$x, b[[4]]$fit, b[[4]]$se))
+title = c("Time", "Mixed", "(-) Mesoscale", "(+) Mesoscale", "Sub-mesoscale")
+shadedline(x = mesp$V1,
+           ylim = c(min(mesp$V2 - mesp$V3), max(mesp$V2 + mesp$V3)),
+           y0 = mesp$V2,
+           y1 = mesp$V2 + mesp$V3,
+           y2 = mesp$V2 - mesp$V3,
+           title = "",
+           line = 0.7,
+           adj = 0,
+           main = paste(title[5]),
+           ylab = "",
+           col = "grey69",
+           xlab = "Month of Year",
+           labels = format(as.Date(mesp$V1), "%Y-%m-%d"),
+           mar = c(5, 3, 2, 3))
+# abline(v = peak, col = colvect("grey22", alpha = 0.5), lty = 1,
+#        lwd = 2)
+abline(v = start, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+abline(v = end, col = colvect("grey22", alpha = 0.5), lty = 1,
+       lwd = 2)
+```
+
+subsisting each region to be plotted
 ```{r}
 reg   = split(xyz, xyz$k)
 mix   = reg[[1]]
@@ -378,8 +610,7 @@ regions = data.frame(time = time, back = back, mix = mix, sub = sub, mesop = mes
 regions$time = as.numeric(regions$time)
 ```
 
-# plotting 
-
+plotting 
 ```{r, fig.height = 10, fig.width=5}
 layout(matrix(c(1, 
                 2, 
@@ -512,7 +743,6 @@ rm(x, y)
 # points(x, y,  pch = 20, cex = 1.25) 
 ```
 
-
 subsisting each region t be plotted
 ```{r}
 reg   = split(xyz, xyz$k)
@@ -545,6 +775,7 @@ regions = data.frame(time = time, back = back, mix = mix, sub = sub, mesop = mes
 regions$time = as.numeric(regions$time)
 ```
 
+plotting
 ```{r, fig.height = 10, fig.width=5}
 layout(matrix(c(1, 
                 2, 
