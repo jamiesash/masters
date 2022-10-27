@@ -33,11 +33,20 @@ are engulfed by the subtropical CHL front, making a true end date difficult to
 distinguish. Conversely some blooms notably 2005 and 2019 (Toyoda explains 
 these), begin as the subtropical CHL front recedes and a true start date is 
 difficult to distinguish. In some cases, 2007 and 2020 multiple large blooms 
+<<<<<<< HEAD
 occur in a single year. 
 
 Bloom magnitudes range from 0.17 - 3.00, with a median value of $0.67 [mg/m^2]$, 
 approximately $\times 4.5$ the background $1-1.5 [mg/m^3]$. Some of the stronger
 blooms occurred along 30N in 2011, 2007, and 2020. The magnitude of the raw 
+=======
+occur in a single year. Interestingly, the maximum magnitude of each bloom 
+occurs towards the XXXX or the bloom's lifespan. 
+
+Bloom magnitudes range from 0.17 - 3.00, with a median value of $0.67 [mg/m^2]$, 
+approximately $\times 4.5$ the background $1-1.5 [mg/m^3]$. Some of the stronger
+blooms occurred along 32N in 2011, 2007, and 2020. The magnitude of the raw 
+>>>>>>> f5751dac6766de56616eee1c8743b351ed3f9d19
 chlorophyll satellite signal does not taking into account the northward 
 chlorophyll gradient. When considering the chlorophyll anomaly's maximum
 magnitude that does correct for the northward chlorophyll gradient, the years
@@ -50,10 +59,13 @@ $1 \times 10^5 [km^2]$ and those that are engulfed by the subtropical
 chlorophyll front. The blooms appear to cluster in three locations, that is, 
 near Stn. ALOHA at [25N, -152W], at approximately [32N, 160W] and [32N, 140W]. 
 
+<<<<<<< HEAD
 Interestingly, the maximum magnitude of each bloom occurs towards the XXXX or 
 the bloom's lifespan. 
 
 
+=======
+>>>>>>> f5751dac6766de56616eee1c8743b351ed3f9d19
 # 2018 Case Study --------------------------------------------------------------
 
 ## Figure 6:  k-means cluster analysis of (sub)mesoscale regions
