@@ -20,8 +20,11 @@ library("plotrix")
 # Load the data: chl
 ```
 
+Variables to change
 ```{r}
-bloomdays = list(as.Date("2019-08-17"), as.Date("2020-08-08"), as.Date("2018-09-26"))
+sdate = as.Date("2018-09-26") - 100
+edate = as.Date("2018-09-26") + 50
+
 lons = c(-170, -125)
 lats = c( 18,   37)
 domain  = extent(lons, lats)
@@ -31,7 +34,8 @@ domain_edds = extent(domain[1]-2,
                       domain[4]+2)
 ```
 
-```{r}
+functions
+```{r, eval = FALSE}
 fronts = function(ras,
                   downsize = 10,
                   I = 2){
@@ -59,14 +63,14 @@ fronts = function(ras,
 # MET3 eddy data dowloaded directly from AVISO
 a_edds = load_edds(path = "..\\data\\eddies\\",
                    file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
-                   sdate = bloomdays[[3]] - 100,
-                   edate = bloomdays[[3]] + 50,
+                   sdate = sdate,
+                   edate = edate,
                    domain = domain_edds)
 
 c_edds = load_edds(path  = "..\\data\\eddies\\",
                     file = "Eddy_trajectory_nrt_3.2exp_cyclonic_20180101_20220118.nc",
-                    sdate = bloomdays[[3]] - 100,
-                    edate = bloomdays[[3]] + 50,
+                    sdate = sdate,
+                    edate = edate,
                     domain = domain_edds)
 
 # I'm uploading the large data set for the anomaly calculation
@@ -75,8 +79,8 @@ chl = loadsat(url = "https://coastwatch.noaa.gov//erddap",
               lat = lats,
               lon = lons,
               parameter = c("all"),
-              sdate = bloomdays[[3]] - 100,
-              edate = bloomdays[[3]] + 50,
+              sdate = sdate,
+              edate = edate,
               large = FALSE)
 
 sla = loadsat(url = "https://coastwatch.pfeg.noaa.gov/erddap",
@@ -84,8 +88,8 @@ sla = loadsat(url = "https://coastwatch.pfeg.noaa.gov/erddap",
               parameter = c("sla", "time", "latitude", "longitude"),   
               lat = lats,
               lon = lons,
-              sdate = bloomdays[[3]] - 100,
-              edate = bloomdays[[3]] + 60,
+              sdate = sdate,
+              edate = edate,
               large = TRUE,
               by = 100)
 
@@ -160,6 +164,12 @@ gc()
 
 remove short lived eddies
 ```{r, eval = FALSE}
+a_edds = load_edds(path = "..\\data\\eddies\\",
+                   file = "Eddy_trajectory_nrt_3.2exp_anticyclonic_20180101_20220118.nc",
+                   sdate = sdate,
+                   edate = edate,
+                   domain = domain_edds)
+
 ind = unique(a_edds$id)
 
 duration = vector()
@@ -170,7 +180,7 @@ for(i in ind){
   duration[j] = length(unique(temp$time))
 }
 
-idx = which(duration < 8)
+idx = which(duration < 4)
 bad_edds = ind[idx]
 bad_edds = is.element(a_edds$id, bad_edds)
 a_edds = subset(a_edds, !bad_edds)
@@ -178,19 +188,20 @@ a_edds = subset(a_edds, !bad_edds)
 
 Only CHL bloom values
 ```{r}
+
 chl_l  = list()
 for(i in 1:dim(chl)[3]) chl_l[[i]] = chl[[i]]
 
-chl_points  = lapply(chl_l, fronts, I = 2, downsize = 1)
+chl_points  = lapply(chl_l, fronts, I = 0, downsize = 1)
 
 # removes NA values and values less than 0.05
-pretty = function(x, thresh = 0.05) {
-  x = subset(x, !is.na(value))
-  x = subset(x, value > thresh) 
-  x 
-  }
-
-chl_points = lapply(chl_points, FUN = pretty)
+# pretty = function(x, thresh = 0.05) {
+#   x = subset(x, !is.na(value))
+#   x = subset(x, value > thresh) 
+#   x 
+#   }
+# 
+# chl_points = lapply(chl_points, FUN = pretty)
 ```
 
 Plotting eddies over FSLE
@@ -199,7 +210,7 @@ wdmap = getMap(resolution = "high")
 s = dim(fsle)
 
 ani.record(reset = TRUE)
-for(i in 1:s[3]){
+for(i in 1:10){
   bloom = chl_points[[i]]
   
   image(fsle[[i]], 
@@ -212,7 +223,7 @@ for(i in 1:s[3]){
          bloom$lats, 
          col = colvect(rep("#003300", length(bloom$value)), alpha = bloom$value),
          pch = 20,
-         cex = 1)
+         cex = 0.75)
   
   edds_day = subset(a_edds, time == getZ(fsle[[i]]))
   ind = unique(edds_day$id)
@@ -220,9 +231,13 @@ for(i in 1:s[3]){
      pts <- subset(edds_day, id == j)
      x   <- pts$lon
      y   <- pts$lat
-     polygon(pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lon,
-             pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lat,
-             lwd = 2)
+     points(x, y, 
+            col = "black",
+            pch = 20,
+            cex = 1)
+     # polygon(pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lon,
+     #         pts[order(atan2(x-mean(x), y-mean(y))), 2:3]$lat,
+     #         lwd = 2)
   }
   axis(side = 1,
     #at = at,
@@ -263,9 +278,9 @@ for(i in 1:s[3]){
   dev.off()
 }
 
-oopts = ani.options(interval = 0.1, ani.width = 750, ani.height = 600)
+oopts = ani.options(interval = 0.1, ani.width = 800, ani.height = 600)
 saveGIF(ani.replay())
-ani.record(reset = TRUE) # clear it
+#ani.record(reset = TRUE) # clear it
 ```
 
 Plotting eddies over FSLE
