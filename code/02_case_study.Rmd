@@ -65,8 +65,9 @@ text-align: justify}
 </style>
 
 ```{r setup, include=FALSE, message = FALSE}
-source("../R/functions.R")
-source("../R/libraries.R")
+source("functions.R")
+source("libraries.R")
+source("blooms.R")
 rasterOptions(maxmemory = 120e+10, memfrac = 0.9)
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -375,7 +376,7 @@ Loading the data using ERDDAP
 blooms = read.csv("../data/outfiles/full_sum.csv")
 # subseting just 2018 for case study
 idx = year(blooms$sdate) == 2018
-sdate = as.Date(blooms$sdate[idx]) - 14
+sdate = as.Date(blooms$sdate[idx]) - 16
 edate = as.Date(blooms$edate[idx]) + 30
 # lons  = c(-158, -130)
 # lats  = c(23, 34)
@@ -385,7 +386,7 @@ lats = c( 20,   36)
 # should try loading chla data from ERDDAP. Or just anomaly this in one function 
 # I need to make sure I'm not saving a fuck tone of files
 # I'm uploading the large data set for the anomaly calculation
-chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+chl = loadsat(url = "https://upwell.pfeg.noaa.gov/erddap",
               id  = "erdMH1chla1day",
               lat = lats,
               lon = lons,
@@ -417,6 +418,7 @@ gc()
 
 Correct oreantation
 ```{r}
+
 ```
 
 Remove Region around Hawaii. CZ fornow 
