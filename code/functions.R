@@ -1334,9 +1334,12 @@ load_edds = function(
   domain = extent(-158, -130, 23, 35)){
   
   nc_data <- nc_open(paste(path, file, sep = ""))
+  # variables <- names(nc_data$var)
   slat <- ncvar_get(nc_data, "effective_contour_latitude")
   slon <- ncvar_get(nc_data, "effective_contour_longitude")
   time <- ncvar_get(nc_data, "time")
+  enumber   = ncvar_get(nc_data, "observation_number")
+
   nc_close(nc_data)
   time <- unlist(time)
   time <- as.Date(time, origin = as.Date("1950-01-01"))
@@ -1347,13 +1350,15 @@ load_edds = function(
   j = 0
   for(i in seq(sdate, edate, by = 1)) {
     j = j + 1
-    ind = which(time == i)
     
+    ind = which(time == i)
+    id = enumber[ind]
     # combine into long format data frame 
     #t   = time[ind]
     lat = slat[, ind]
     lon = slon[, ind]
-    id  = sort(rep(1:dim(lat)[2], dim(lat)[1]))
+    
+    #id  = sort(rep(1:dim(lat)[2], dim(lat)[1]))
     lat = c(lat)
     lon = c(lon)
     lon = lon - 360
