@@ -127,11 +127,12 @@ bcent <- function(ras){
   pix  <- cellStats(ras, stat = mean, na.rm = TRUE)
   idx  <- as.numeric(which(pix == max(pix, na.rm = TRUE)))
   # temp = raster::mask(subset(ras, ind), subset(b, ind))
+  
   # chla layer with largest bloom area
   temp = subset(ras, idx)
-  
+  # smooth that layer to reduce costal effects
+  temp = raster.gaussian.smooth(x = temp, n = 21, sigma = 5)
   #temp = oreant(temp, t1 = TRUE)
-  
   
   temp = vectorize(temp)
   idx = which(temp$val == max(temp$val, na.rm = TRUE))
@@ -306,6 +307,7 @@ sumstats = function(blooms = chlb, signal1 = chl, signal2 = chla, sdate, edate){
   
   mags  = mapply(bmag, x = co, b = cb, SIMPLIFY = FALSE)
   areas = lapply(cb,    FUN = barea)
+  
   m     = lapply(mags,  FUN = mymax, par = "mag")
   a     = lapply(areas, FUN = mymax, par = "area")
   
@@ -355,13 +357,21 @@ Data download
 blooms = blooms[2:nrow(blooms),]
 
 lons = c(-170, -130)
-lats = c( 20,   35)
+lats = c( 17,   35)
  
 # I had 2003-12-01 for the old sum table
 sdate = as.Date("2003-01-02")
 edate = as.Date("2021-12-01")
 chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
               id  = "erdMH1chla8day",
+              lat = lats,
+              lon = lons,
+              sdate = sdate,
+              edate = edate,
+              large = FALSE)
+
+chl = loadchl(url = "https://upwell.pfeg.noaa.gov/erddap",
+              id  = "erdMH1chlamday",
               lat = lats,
               lon = lons,
               sdate = sdate,
@@ -397,12 +407,6 @@ correct oreantation
 chl = oreant(chl, t1 = TRUE)
 ```
 
-check oreantation
-```{r}
-cmap = calc(chl, fun = mean, na.rm = TRUE)
-plot(cmap)
-```
-
 Remove South of Hawaii and Chlorophyll front  
 ```{r, eval = TRUE, message = FALSE, warning = FALSE}
 chl = bufcoast(chl, 
@@ -415,36 +419,20 @@ Calculate CHL anomaly and boolian bloom array
 ```{r, message = FALSE, warning = FALSE}
 # I receive an warning when detrending for cells of all NA values (Hawaii)
 # chl anom. calc. needs at least one full year to work correctly
-chl_a = anomalize(chl, detrend = FALSE)
+chl_a = anomalize(chl, detrend = TRUE)
 chl_b = bool(chl_a)
 gc()
 ```
 
-STL Filter: calculate anomaly, seasonality and climatology 
-```{r, message = FALSE, warning = FALSE}
-# ts   = filt_stl(ras = chl, res = 1, sub.start = 8)
-# gc()
-```
-
-Fill small blips and identify large blooms. Determine start, end, and duration of blooms
-```{r, message = FALSE, warning = FALSE}
-# durations = bloomspan(anom = ts$anom, time = getZ(chl), gaps = 1, dur = 1)
-# gc()
-```
-
 Apply functions and catinate summary table
 ```{r, message = FALSE, warning = FALSE}
-# Create a list of objects subset by bloom time span to calc stats on
-# tbl = sumstats(blooms = chl_b, signal = chl, tbl = durations)
-
 # I need to find the start and end index of each bloom
-sumtbl = sumstats(blooms = chl_b, signal1 = chl, signal2 = chl, sdate = blooms$sdate, edate = blooms$edate)
+sumtbl = sumstats(blooms = chl_b, signal1 = chl, signal2 = chl_a, sdate = blooms$sdate, edate = blooms$edate)
 gc()
 ```
-
 saving tables as csv
 ```{r, eval = FALSE, message = FALSE, warning = FALSE,}
-write.csv(sumtbl, file = "../data/full_sum_20220829.csv")
+write.csv(sumtbl, file = "../data/full_sum_20220928.csv")
 gc()
 ```
 
@@ -456,8 +444,8 @@ gc()
 ```{r, message = FALSE, fig.show = "hold", out.width = "95%",  warning = FALSE}
 tbl = sumtbl
 rownames(tbl) = NULL
-idx = !year(tbl$sdate) == 2008
-tbl = tbl[idx,]
+#idx = !year(tbl$sdate) == 2008
+#tbl = tbl[idx,]
 kbl(tbl, 
     booktabs = T, 
     latex_options = c("striped"),
@@ -488,15 +476,17 @@ plot(cmap, main = "CHL anomaly")
 ## Visualize Summary Table {.tabset}
 
 ### Big Bloom Magnitudes
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+```{r, message = FALSE, fig.show = "hold", fig.width = 8,  warning = FALSE}
+
 x = tbl$mag
 y = year(tbl$sdate)
-main = "30N bloom magnitudes"
-ylab = "CHL [mg/mg^3]"
+main = ""
+ylab = TeX(r'(CHL $[mg/mg^3]$)')
 xlab = "Bloom year"
 # this changes the linewidth outsidet he plot
 opar = par(lwd = 2)
 
+par(mar = c(5,5,3,3))
 barplot(x, 
         names.arg = y, 
         main = "",
@@ -506,6 +496,8 @@ barplot(x,
         axes = FALSE,
         cex.names = 1.25,
         col = "grey80",
+        #las=2,
+        cex.axis=0.2,
         bourder = colvect("grey22", alpha = 0.9)
         #density = 1
         )
@@ -515,9 +507,9 @@ grid(nx = 6, # X-axis divided in two sections
        lty = 2, 
        col = colvect(c("gray69"), alpha = 0.5), lwd = 1)
 axis(side = 2,
-     las  = 2, 
-     lwd  = 2, 
-     mgp  = c(1, 0.75, 0), 
+     las  = 2,
+     lwd  = 2,
+     mgp  = c(1, 0.75, 0),
      cex.axis = 1.25,
      col = colvect("grey22", alpha = 0.9))
 title(main = main,
@@ -529,18 +521,19 @@ title(xlab = xlab, cex.lab = 1.5, line = 2.5)
 ```
 
 ### Big Bloom Areas
-```{r, message = FALSE, fig.show = "hold", out.width = "75%",  warning = FALSE}
+```{r, message = FALSE, fig.show = "hold", fig.width = 8,  warning = FALSE}
 tbl = sumtbl
-idx = tbl$area > 550000
-tbl = tbl[idx,]
+#idx = tbl$area > 550000
+#tbl = tbl[idx,]
 
 x = tbl$area/100000
 y = year(tbl$sdate)
-main = "30N bloom areas"
-ylab = "Area [km X 10^5]"
+main = ""
+ylab = TeX(r'(Area $[km \times 10^5]$)')
 xlab = "Bloom year"
 
 # this changes the linewidth outsidet he plot
+par(mar = c(5,5,3,3))
 opar = par(lwd = 2)
 barplot(x, 
         axes = FALSE,
@@ -650,13 +643,13 @@ ggplot(durations) +
 ```{r, message = FALSE, fig.width = 10, fig.height = 6.8, fig.show = "hold", out.width = "95%",  warning = FALSE}
 
 tbl = sumtbl
-e = extent(-175, -127, 15, 40)
+e = extent(-173, -125, 11, 46)
 wdmap <- getMap(resolution = "high")
 temp = tbl
-idx = tbl$area > 550000
+idx = tbl$lon > -165
 tbl = tbl[idx,]
-idx = !year(tbl$sdate) == 2015
-tbl = tbl[idx,]
+#idx = !year(tbl$sdate) == 2015
+#tbl = tbl[idx,]
 
 # radius in km
 a = tbl$area
@@ -666,7 +659,7 @@ tbl$rad = r
 tbl$y = as.character(year(tbl$sdate))
 
 idx = order(tbl$area, decreasing = TRUE)
-#txt = tbl[idx,]
+txt = tbl[idx,]
 txt = txt[1:3,]
 
 jamie_theme(e[1:2], e[3:4],
@@ -710,6 +703,24 @@ box(which = "plot", lty = "solid", lwd = 3, col = colvect("grey22", alpha = 0.9)
 
 
 
+
+
+# UNUSED CODE
+
+STL Filter: calculate anomaly, seasonality and climatology 
+```{r, message = FALSE, warning = FALSE}
+# ts   = filt_stl(ras = chl, res = 1, sub.start = 8)
+# gc()
+```
+
+Fill small blips and identify large blooms. Determine start, end, and duration of blooms
+```{r, message = FALSE, warning = FALSE}
+# durations = bloomspan(anom = ts$anom, time = getZ(chl), gaps = 1, dur = 1)
+# gc()
+
+# Create a list of objects subset by bloom time span to calc stats on
+# tbl = sumstats(blooms = chl_b, signal = chl, tbl = durations)
+```
 
 
 FFT: calculate anomaly, seasonality and climatology 
